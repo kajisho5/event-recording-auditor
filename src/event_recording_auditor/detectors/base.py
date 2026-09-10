@@ -27,6 +27,6 @@ class Detector(ABC):
     requires: str = "video+audio"
 
     @abstractmethod
-    def run(self, ctx: "AnalysisContext") -> list[Event]:
+    def run(self, ctx: AnalysisContext) -> list[Event]:
         """Analyze `ctx` and return any anomaly candidates found."""
         raise NotImplementedError

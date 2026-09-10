@@ -101,16 +101,12 @@ def probe(path: str | Path, timeout: float = 60.0) -> MediaInfo:
         path,
     ]
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout, check=False
-        )
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired as exc:
         raise FFprobeError(f"ffprobe timed out probing {path!r}") from exc
 
     if proc.returncode != 0:
-        raise FFprobeError(
-            f"ffprobe failed on {path!r} (exit {proc.returncode}): {proc.stderr.strip()}"
-        )
+        raise FFprobeError(f"ffprobe failed on {path!r} (exit {proc.returncode}): {proc.stderr.strip()}")
 
     try:
         data = json.loads(proc.stdout)

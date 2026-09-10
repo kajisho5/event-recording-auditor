@@ -46,9 +46,7 @@ class ClippingDetector(Detector):
         )
         events = []
         for seg in segments:
-            severity = (
-                Severity.HIGH if seg.duration >= self.high_severity_duration else Severity.MEDIUM
-            )
+            severity = Severity.HIGH if seg.duration >= self.high_severity_duration else Severity.MEDIUM
             events.append(
                 Event(
                     start=seg.start,
@@ -68,8 +66,7 @@ class ClippingDetector(Detector):
                         "max_flat_factor": seg.max_flat_factor,
                     },
                     possible_interpretation=(
-                        "Possible audio clipping (input gain too high, or a mixer/"
-                        "encoder overload)."
+                        "Possible audio clipping (input gain too high, or a mixer/encoder overload)."
                     ),
                     detector=self.name,
                     source_files=[ctx.source],
@@ -129,18 +126,14 @@ class AudioDropoutDetector(Detector):
 
     def _active_before(self, envelope: list[LevelWindow], index: int) -> bool:
         window_start_time = envelope[index].start - self.context_window
-        context = [
-            w for w in envelope[:index] if w.start >= window_start_time
-        ]
+        context = [w for w in envelope[:index] if w.start >= window_start_time]
         return bool(context) and all(w.rms_db > self.active_db for w in context)
 
     def _active_after(self, envelope: list[LevelWindow], index: int) -> bool:
         if index >= len(envelope):
             return False
         window_end_time = envelope[index].start + self.context_window
-        context = [
-            w for w in envelope[index:] if w.start < window_end_time
-        ]
+        context = [w for w in envelope[index:] if w.start < window_end_time]
         return bool(context) and all(w.rms_db > self.active_db for w in context)
 
     def _build_event(self, ctx: AnalysisContext, run, before_active, after_active) -> Event:
@@ -156,8 +149,7 @@ class AudioDropoutDetector(Detector):
             observations=[
                 f"Audio level dropped to near-silence ({run[0].rms_db:.1f} dBFS or "
                 f"below) for {duration:.2f}s.",
-                f"Audio was active for at least {self.context_window:.1f}s immediately "
-                "before this interval.",
+                f"Audio was active for at least {self.context_window:.1f}s immediately before this interval.",
                 f"Audio was active again for at least {self.context_window:.1f}s "
                 "immediately after this interval.",
             ],
@@ -245,7 +237,13 @@ class ChannelImbalanceDetector(Detector):
             return "imbalance"
         return None
 
-    def _build_event(self, ctx: AnalysisContext, run: list[ChannelLevelWindow], label: str, duration: float) -> Event:
+    def _build_event(
+        self,
+        ctx: AnalysisContext,
+        run: list[ChannelLevelWindow],
+        label: str,
+        duration: float,
+    ) -> Event:
         last_levels = run[-1].channel_rms_db
         levels_str = ", ".join(f"ch{ch}: {lv:.1f} dBFS" for ch, lv in sorted(last_levels.items()))
 
@@ -274,10 +272,7 @@ class ChannelImbalanceDetector(Detector):
             type=f"channel_{label}",
             severity=severity,
             confidence=confidence,
-            observations=[
-                f"Channel levels diverged for {duration:.2f}s (at end of interval: "
-                f"{levels_str})."
-            ],
+            observations=[f"Channel levels diverged for {duration:.2f}s (at end of interval: {levels_str})."],
             measurements={"duration": duration, "channel_rms_db": last_levels},
             possible_interpretation=interpretation,
             detector=self.name,

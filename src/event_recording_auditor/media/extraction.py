@@ -51,7 +51,15 @@ def extract_clip(
     clip_start = max(start - pad, 0.0)
     duration = max((end - start) + 2 * pad, 0.5)
 
-    args = ["-y", "-ss", f"{clip_start:.3f}", "-i", str(source), "-t", f"{duration:.3f}"]
+    args = [
+        "-y",
+        "-ss",
+        f"{clip_start:.3f}",
+        "-i",
+        str(source),
+        "-t",
+        f"{duration:.3f}",
+    ]
     if reencode:
         args += ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac"]
     else:

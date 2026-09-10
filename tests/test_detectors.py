@@ -7,7 +7,9 @@ from event_recording_auditor.detectors import (
 )
 
 
-def test_slide_rollback_pattern_detector_finds_core_use_case(premature_slide_advance_clip):
+def test_slide_rollback_pattern_detector_finds_core_use_case(
+    premature_slide_advance_clip,
+):
     ctx = AnalysisContext(premature_slide_advance_clip)
     events = SlideRollbackPatternDetector().run(ctx)
     assert len(events) == 1
@@ -18,7 +20,9 @@ def test_slide_rollback_pattern_detector_finds_core_use_case(premature_slide_adv
     assert event.requires_human_review is True
 
 
-def test_brief_unexpected_slide_detector_finds_short_appearance(premature_slide_advance_clip):
+def test_brief_unexpected_slide_detector_finds_short_appearance(
+    premature_slide_advance_clip,
+):
     ctx = AnalysisContext(premature_slide_advance_clip)
     events = BriefUnexpectedSlideDetector(brief_duration_threshold=1.2).run(ctx)
     assert len(events) == 1
@@ -69,7 +73,9 @@ def test_progression_interruption_flags_quiet_static_clip(quiet_static_clip):
     assert events[0].type == "progression_interruption"
 
 
-def test_progression_interruption_does_not_flag_normal_recording(premature_slide_advance_clip):
+def test_progression_interruption_does_not_flag_normal_recording(
+    premature_slide_advance_clip,
+):
     # Short clip, well under any interruption threshold -> nothing flagged.
     ctx = AnalysisContext(premature_slide_advance_clip)
     events = ProgressionInterruptionDetector(min_duration=10.0).run(ctx)

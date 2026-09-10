@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from ..media.ffprobe import MediaInfo, probe
+from ..media.ffprobe import probe
 from .metadata_diff import MetadataDiff, diff_metadata
 from .quality_metrics import QualityMetrics, compare_quality
 
@@ -112,10 +112,7 @@ def compare_source_and_export(
             "video stream or metrics disabled)."
         )
         conclusion = Conclusion.INCONCLUSIVE
-        reasoning.append(
-            "Insufficient evidence to classify: no objective quality comparison "
-            "was available."
-        )
+        reasoning.append("Insufficient evidence to classify: no objective quality comparison was available.")
         return ComparisonResult(
             source_path=source_path,
             export_path=export_path,
@@ -133,9 +130,7 @@ def compare_source_and_export(
     )
     reasoning.append(f"PSNR average: {quality.psnr_avg_db} dB, minimum: {quality.psnr_min_db} dB.")
 
-    degraded = (
-        quality.ssim_avg is not None and quality.ssim_avg < _SSIM_DEGRADATION_THRESHOLD
-    ) or (
+    degraded = (quality.ssim_avg is not None and quality.ssim_avg < _SSIM_DEGRADATION_THRESHOLD) or (
         quality.psnr_avg_db is not None and quality.psnr_avg_db < _PSNR_DEGRADATION_THRESHOLD_DB
     )
 

@@ -51,9 +51,7 @@ class BlackoutDetector(Detector):
                     type="blackout",
                     severity=severity,
                     confidence=Confidence.HIGH,
-                    observations=[
-                        f"Video was measured as fully black for {seg.duration:.2f}s."
-                    ],
+                    observations=[f"Video was measured as fully black for {seg.duration:.2f}s."],
                     measurements={"duration": seg.duration},
                     possible_interpretation=(
                         "Possible blackout (signal loss, source cut to black "
@@ -122,7 +120,9 @@ class FreezeDetector(Detector):
                 )
             else:
                 severity = Severity.HIGH if seg.duration >= self.high_severity_duration else Severity.MEDIUM
-                confidence = Confidence.MEDIUM if seg.duration < self.high_severity_duration else Confidence.HIGH
+                confidence = (
+                    Confidence.MEDIUM if seg.duration < self.high_severity_duration else Confidence.HIGH
+                )
                 interpretation = (
                     "Possible video freeze / signal stall: no visual change and no "
                     "audio activity for a sustained period."

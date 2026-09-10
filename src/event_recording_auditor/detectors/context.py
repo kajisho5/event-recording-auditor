@@ -28,9 +28,7 @@ class AnalysisContext:
     media_info: MediaInfo = field(init=False)
 
     _level_envelope: list[LevelWindow] | None = field(default=None, init=False, repr=False)
-    _channel_level_envelope: list[ChannelLevelWindow] | None = field(
-        default=None, init=False, repr=False
-    )
+    _channel_level_envelope: list[ChannelLevelWindow] | None = field(default=None, init=False, repr=False)
     _frame_samples: list[FrameSample] | None = field(default=None, init=False, repr=False)
     _slide_segments: list[Segment] | None = field(default=None, init=False, repr=False)
     _slide_states: list[SlideState] | None = field(default=None, init=False, repr=False)
@@ -50,9 +48,7 @@ class AnalysisContext:
             if not self.media_info.has_audio:
                 self._level_envelope = []
             else:
-                self._level_envelope = compute_level_envelope(
-                    self.source, window=self.level_window
-                )
+                self._level_envelope = compute_level_envelope(self.source, window=self.level_window)
         return self._level_envelope
 
     def channel_count(self) -> int:
@@ -76,9 +72,7 @@ class AnalysisContext:
             if not self.media_info.has_video:
                 self._frame_samples = []
             else:
-                self._frame_samples = sample_frames(
-                    self.source, fps=self.slide_fps, grid=self.slide_grid
-                )
+                self._frame_samples = sample_frames(self.source, fps=self.slide_fps, grid=self.slide_grid)
         return self._frame_samples
 
     def visual_activity(self) -> list[tuple[float, int]]:
@@ -92,20 +86,16 @@ class AnalysisContext:
         """
         samples = self.frame_samples()
         out: list[tuple[float, int]] = []
-        for prev, cur in zip(samples, samples[1:]):
+        for prev, cur in zip(samples, samples[1:], strict=False):
             out.append((cur.time, hamming_distance(prev.hash, cur.hash)))
         return out
 
-    def slide_states(
-        self, stable_threshold: int = 24, match_threshold: int = 48
-    ) -> list[SlideState]:
+    def slide_states(self, stable_threshold: int = 24, match_threshold: int = 48) -> list[SlideState]:
         if self._slide_states is None:
             samples = self.frame_samples()
             segments = build_segments(samples, stable_threshold=stable_threshold)
             self._slide_segments = segments
-            self._slide_states = build_slide_timeline(
-                segments, match_threshold=match_threshold
-            )
+            self._slide_states = build_slide_timeline(segments, match_threshold=match_threshold)
         return self._slide_states
 
     def slide_stability_ratio(self, min_stable_duration: float = 2.0) -> float | None:

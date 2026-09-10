@@ -1,6 +1,10 @@
 import pytest
 
-from event_recording_auditor.slides import build_segments, build_slide_timeline, sample_frames
+from event_recording_auditor.slides import (
+    build_segments,
+    build_slide_timeline,
+    sample_frames,
+)
 
 
 def test_core_use_case_1_2_1_2_pattern(premature_slide_advance_clip):

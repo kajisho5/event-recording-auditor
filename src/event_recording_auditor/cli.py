@@ -51,15 +51,19 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     )
 
     media_summary = _media_summary(result.context)
-    json_path = write_json_report(
-        result.timeline, media_summary, out_dir / "report.json", result.limitations
-    )
+    json_path = write_json_report(result.timeline, media_summary, out_dir / "report.json", result.limitations)
     html_path = write_html_report(
-        result.timeline, media_summary, out_dir / "report.html", result.limitations,
+        result.timeline,
+        media_summary,
+        out_dir / "report.html",
+        result.limitations,
         language=args.lang,
     )
     markdown_path = write_markdown_report(
-        result.timeline, media_summary, out_dir / "report.md", result.limitations,
+        result.timeline,
+        media_summary,
+        out_dir / "report.md",
+        result.limitations,
         language=args.lang,
     )
 
@@ -216,7 +220,9 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("export", help="Path to the edited/exported delivery file.")
     compare.add_argument("--out-dir", default="audit-output", help="Directory for the comparison report.")
     compare.add_argument(
-        "--delivery-spec", default=None, help="Optional JSON file describing the intended delivery format."
+        "--delivery-spec",
+        default=None,
+        help="Optional JSON file describing the intended delivery format.",
     )
     compare.add_argument(
         "--max-compare-duration",

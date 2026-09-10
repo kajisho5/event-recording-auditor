@@ -83,12 +83,12 @@ def _render_timeline_rows(events: list[Event], lang: str) -> str:
         color = _SEVERITY_COLOR.get(e.severity.value, "#6b7280")
         rows.append(
             "<tr>"
-            f'<td>{escape(_seconds_to_timestamp(e.start))}</td>'
-            f'<td>{escape(i18n.category_label(e.category.value, lang))}</td>'
+            f"<td>{escape(_seconds_to_timestamp(e.start))}</td>"
+            f"<td>{escape(i18n.category_label(e.category.value, lang))}</td>"
             f'<td><span class="badge" style="background:{color}">'
-            f'{escape(i18n.severity_label(e.severity.value, lang))}</span></td>'
-            f'<td>{escape(i18n.confidence_label(e.confidence.value, lang))}</td>'
-            f'<td>{escape(e.type)}</td>'
+            f"{escape(i18n.severity_label(e.severity.value, lang))}</span></td>"
+            f"<td>{escape(i18n.confidence_label(e.confidence.value, lang))}</td>"
+            f"<td>{escape(e.type)}</td>"
             f'<td><a href="#finding-{escape(e.id)}">{escape(i18n.t("details", lang))}</a></td>'
             "</tr>"
         )
@@ -111,9 +111,7 @@ def _render_finding(e: Event, report_dir: Path, lang: str) -> str:
         rel = _relative_path(path, report_dir)
         if rel:
             evidence_links.append(f'<a href="{escape(rel)}">{escape(label)}</a>')
-    evidence_html = (
-        f'<div class="evidence">{"".join(evidence_links)}</div>' if evidence_links else ""
-    )
+    evidence_html = f'<div class="evidence">{"".join(evidence_links)}</div>' if evidence_links else ""
 
     interpretation = interpretation or i18n.t("no_interpretation", lang)
 

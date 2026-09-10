@@ -94,7 +94,10 @@ def _run_one_job(job: BatchJob) -> BatchJobResult:
             "frame_rate": result.context.media_info.frame_rate,
         }
         json_path = write_json_report(
-            result.timeline, media_summary, venue_dir / "report.json", result.limitations
+            result.timeline,
+            media_summary,
+            venue_dir / "report.json",
+            result.limitations,
         )
         html_path = write_html_report(
             result.timeline,

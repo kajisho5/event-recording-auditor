@@ -45,7 +45,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
     "details": {"en": "details", "ja": "詳細"},
     "detector": {"en": "Detector", "ja": "検出器"},
     "observed": {"en": "Observed", "ja": "観測事実"},
-    "possible_interpretation": {"en": "Possible interpretation", "ja": "考えられる解釈"},
+    "possible_interpretation": {
+        "en": "Possible interpretation",
+        "ja": "考えられる解釈",
+    },
     "human_verification_required": {
         "en": "Human verification required.",
         "ja": "人間による確認が必要です。",
@@ -308,7 +311,7 @@ _JA_RENDERERS = {
     "possible_feedback_howling": _ja_possible_feedback_howling,
 }
 
-_RENDERERS: dict[str, dict[str, "callable"]] = {
+_RENDERERS: dict[str, dict[str, callable]] = {
     "ja": _JA_RENDERERS,
 }
 
