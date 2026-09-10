@@ -11,20 +11,6 @@
 **Full Changelog**: https://github.com/kajisho5/event-recording-auditor/commits/v0.1.0-beta
 
 
-## main - 2026-09-10
-
-## What's Changed
-* Implement Event Recording Auditor: deterministic anomaly detection + post-production comparison by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/1
-* Add release automation (tag push → GitHub Release with auto-generated notes) by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/2
-* Add lint CI, Dependabot, Docker image, CHANGELOG automation, auto-tag-on-version-bump by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/3
-* Fix release/docker workflows never firing after tag-on-version-bump by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/8
-
-## New Contributors
-* @kajisho5 made their first contribution in https://github.com/kajisho5/event-recording-auditor/pull/1
-
-**Full Changelog**: https://github.com/kajisho5/event-recording-auditor/commits/main
-
-
 New entries are added automatically (newest first) by
 `.github/workflows/release.yml` whenever a version tag is published --
 see README.md, "Releasing a version".
