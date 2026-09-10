@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.1-beta - 2026-09-10
+
+## What's Changed
+* Fix release/docker workflows never firing after tag-on-version-bump by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/8
+* Fix workflow_dispatch on release.yml/docker.yml to take an explicit tag by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/9
+* Remove bogus 'main' entry from CHANGELOG.md by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/10
+* Add regression test for the B->A->B slide rollback direction by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/11
+* Add a real example-output section to the README by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/12
+* Polish README: badges, contents nav, docs table by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/13
+* Make offline/local-only operation visible in the README header by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/14
+* Bump version to 0.1.1-beta by @kajisho5 in https://github.com/kajisho5/event-recording-auditor/pull/15
+
+
+**Full Changelog**: https://github.com/kajisho5/event-recording-auditor/compare/v0.1.0-beta...v0.1.1-beta
+
+
 ## v0.1.0-beta - 2026-09-10
 
 ## What's Changed
