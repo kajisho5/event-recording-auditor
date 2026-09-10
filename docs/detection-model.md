@@ -47,6 +47,7 @@ context-dependent. Only Tier 1 measurements (blackout, clipping) reach
 | `blackout` | 1 | video | video | Wraps `blackdetect`. |
 | `freeze` | 1 | video | video (+audio improves confidence) | Wraps `freezedetect`; downgrades confidence/severity when audio was active throughout (normal static shot). See "Known false-positive class" below. |
 | `clipping` | 1 | audio | audio | `astats` peak level + flat-factor, both required, sustained. |
+| `channel_imbalance` / `channel_missing` | 1 | audio | audio (2+ channels) | Per-channel `astats` RMS. `channel_missing`: one channel active while another is near-silent (MEDIUM/HIGH). `channel_imbalance`: sustained level gap between channels that are both somewhat active (LOW/LOW, since this can be an intentional mono-on-one-channel mix). Skips gracefully (with a recorded limitation) on mono audio. |
 | `slide_rollback_pattern` | 2 | presentation | video | The spec's core use case: `A -> B -> A(-> B)`. Confidence never exceeds medium. |
 | `brief_unexpected_slide` | 2 | presentation | video | Any short-duration slide state, independent of whether it reverts. |
 | `audio_dropout` (possible) | 2 | audio | audio | Silence run bracketed by active audio on both sides, duration-bounded to exclude natural pauses. |
@@ -80,7 +81,6 @@ implemented, with the reason each was deferred rather than faked:
 | Capability | Why deferred |
 |---|---|
 | Camera/slide source-switching timeline (4.4, 28.2) | Requires being able to tell "this frame is a camera shot" from "this frame is a slide" from pixels alone, or a separately-tagged source feed. Neither is reliably available from a single switched program recording; building this without one of those inputs would be guessing, which section 19 forbids. |
-| Audio channel/routing anomalies (28.3) | Needs per-channel analysis (L/R imbalance, routing discontinuity) which is architecturally straightforward to add to `audio/levels.py` but was not yet prioritized against Tier 1/2 work; tracked as a near-term addition. |
 | Presenter/speech visual correlation (6, 28.6) | Needs face/mouth-activity estimation, which needs a real computer-vision dependency (e.g. a face-landmark model) well beyond the ffmpeg-first design. Not added without an explicit dependency-tradeoff decision. |
 | Camera framing/focus/exposure quality (28.1, 28.14) | Needs reference-free image-quality estimation (blur/exposure metrics) that has real false-positive risk (shallow depth of field, intentional reframing) and was not prototyped against real footage yet. |
 | Caption/lower-third/OCR checks (28.12) | Needs OCR; spec explicitly warns never to invent a name from uncertain OCR, so this needs careful confidence-gating before it's worth shipping. |

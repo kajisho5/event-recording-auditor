@@ -54,3 +54,13 @@ def premature_slide_advance_clip(fixtures_dir) -> str:
 @pytest.fixture(scope="session")
 def quiet_static_clip(fixtures_dir) -> str:
     return str(fixtures_dir / "quiet_static.mp4")
+
+
+@pytest.fixture(scope="session")
+def channel_dropout_audio(fixtures_dir) -> str:
+    return str(fixtures_dir / "channel_dropout.wav")
+
+
+@pytest.fixture(scope="session")
+def channel_balanced_audio(fixtures_dir) -> str:
+    return str(fixtures_dir / "channel_balanced.wav")

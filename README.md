@@ -59,7 +59,7 @@ plan, delivery spec) and how to phrase findings responsibly.
 | Category | Detectors |
 |---|---|
 | Video (Tier 1) | Blackout, freeze (audio-correlated) |
-| Audio (Tier 1/2) | Clipping, context-aware possible audio dropout |
+| Audio (Tier 1/2) | Clipping, channel imbalance/missing-channel, context-aware possible audio dropout |
 | Presentation (Tier 2) | Slide rollback pattern (the `1 -> 2 -> 1 -> 2` core use case), brief unexpected slide |
 | Progress (Tier 2) | Progression interruption (camera + audio + slide correlation) |
 | Audio (Tier 3, experimental, opt-in) | Possible feedback/howling |

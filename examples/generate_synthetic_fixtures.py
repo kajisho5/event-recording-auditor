@@ -69,6 +69,26 @@ def make_normal_tone_audio(out_path: Path) -> Path:
     return out_path
 
 
+def make_channel_dropout_audio(out_path: Path) -> Path:
+    """Stereo audio with the right channel silent throughout -- a dropped mic/channel."""
+    _run(
+        "-f", "lavfi", "-i", "sine=frequency=440:duration=2:sample_rate=16000",
+        "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono:d=2",
+        "-filter_complex", "[0:a][1:a]amerge=inputs=2[a]",
+        "-map", "[a]", "-ac", "2", str(out_path),
+    )
+    return out_path
+
+
+def make_channel_balanced_audio(out_path: Path) -> Path:
+    """Balanced stereo audio, for false-positive checks."""
+    _run(
+        "-f", "lavfi", "-i", "sine=frequency=440:duration=2:sample_rate=16000",
+        "-ac", "2", str(out_path),
+    )
+    return out_path
+
+
 def make_premature_slide_advance_clip(out_path: Path) -> Path:
     """The spec's core use case: slide A (3s) -> B (0.5s, brief) -> A (2s) -> B (3s).
 
@@ -120,6 +140,8 @@ def generate_all(out_dir: Path) -> dict[str, Path]:
         "silence_gap": make_silence_gap_audio(out_dir / "silence_gap.wav"),
         "clipped": make_clipped_audio(out_dir / "clipped.wav"),
         "normal_tone": make_normal_tone_audio(out_dir / "normal_tone.wav"),
+        "channel_dropout": make_channel_dropout_audio(out_dir / "channel_dropout.wav"),
+        "channel_balanced": make_channel_balanced_audio(out_dir / "channel_balanced.wav"),
         "premature_slide_advance": make_premature_slide_advance_clip(
             out_dir / "premature_slide_advance.mp4"
         ),

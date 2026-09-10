@@ -11,7 +11,7 @@ that looks like it dropped out mid-stream rather than paused.
 from __future__ import annotations
 
 from ..audio.clipping import detect_clipping
-from ..audio.levels import LevelWindow
+from ..audio.levels import ChannelLevelWindow, LevelWindow
 from ..timeline import Category, Confidence, Event, Severity
 from .base import Detector
 from .context import AnalysisContext
@@ -168,6 +168,118 @@ class AudioDropoutDetector(Detector):
                 "This cannot be distinguished from a very short deliberate pause with "
                 "certainty from levels alone."
             ),
+            detector=self.name,
+            source_files=[ctx.source],
+        )
+
+
+class ChannelImbalanceDetector(Detector):
+    """Tier 1 detector for spec section 28.3 (audio channel/routing).
+
+    Only meaningful for multi-channel (typically stereo) audio. Classifies
+    each window as one channel effectively missing while another is
+    active (more severe: likely a dropped mic/feed), a large-but-nonzero
+    imbalance between channels (less severe: could be an intentional
+    mono-on-one-channel setup), or balanced -- and only reports sustained
+    runs, not momentary blips.
+    """
+
+    name = "channel_imbalance"
+    tier = 1
+    requires = "audio (multi-channel)"
+
+    def __init__(
+        self,
+        active_db: float = -40.0,
+        missing_db: float = -55.0,
+        imbalance_threshold_db: float = 12.0,
+        min_duration: float = 1.0,
+    ) -> None:
+        self.active_db = active_db
+        self.missing_db = missing_db
+        self.imbalance_threshold_db = imbalance_threshold_db
+        self.min_duration = min_duration
+        self.skipped_reason: str | None = None
+
+    def run(self, ctx: AnalysisContext) -> list[Event]:
+        if ctx.channel_count() < 2:
+            self.skipped_reason = (
+                f"input has {ctx.channel_count()} audio channel(s); channel-imbalance "
+                "detection needs at least 2."
+            )
+            return []
+        envelope = ctx.channel_level_envelope()
+        if not envelope:
+            return []
+
+        classified = [self._classify(w) for w in envelope]
+
+        events: list[Event] = []
+        i = 0
+        n = len(classified)
+        while i < n:
+            label = classified[i]
+            if label is None:
+                i += 1
+                continue
+            j = i
+            while j < n and classified[j] == label:
+                j += 1
+            run = envelope[i:j]
+            duration = run[-1].end - run[0].start
+            if duration >= self.min_duration:
+                events.append(self._build_event(ctx, run, label, duration))
+            i = j
+
+        return events
+
+    def _classify(self, window: ChannelLevelWindow) -> str | None:
+        levels = list(window.channel_rms_db.values())
+        if len(levels) < 2:
+            return None
+        active_levels = [lv for lv in levels if lv > self.active_db]
+        missing_levels = [lv for lv in levels if lv <= self.missing_db]
+        if active_levels and missing_levels:
+            return "missing"
+        if max(levels) - min(levels) >= self.imbalance_threshold_db and active_levels:
+            return "imbalance"
+        return None
+
+    def _build_event(self, ctx: AnalysisContext, run: list[ChannelLevelWindow], label: str, duration: float) -> Event:
+        last_levels = run[-1].channel_rms_db
+        levels_str = ", ".join(f"ch{ch}: {lv:.1f} dBFS" for ch, lv in sorted(last_levels.items()))
+
+        if label == "missing":
+            severity = Severity.HIGH if duration >= 5.0 else Severity.MEDIUM
+            confidence = Confidence.MEDIUM
+            interpretation = (
+                "Possible dropped microphone/channel or a routing fault: one channel "
+                "was active while another was near-silent for a sustained period. "
+                "This can also be an intentionally mono source routed to a single "
+                "channel; the recording alone cannot distinguish these."
+            )
+        else:
+            severity = Severity.LOW
+            confidence = Confidence.LOW
+            interpretation = (
+                "Sustained level imbalance between channels. Could be a genuine "
+                "routing/gain issue, or an intentional mix choice (e.g. a panned "
+                "source); human review recommended."
+            )
+
+        return Event(
+            start=run[0].start,
+            end=run[-1].end,
+            category=Category.AUDIO,
+            type=f"channel_{label}",
+            severity=severity,
+            confidence=confidence,
+            observations=[
+                f"Channel levels diverged for {duration:.2f}s (at end of interval: "
+                f"{levels_str})."
+            ],
+            measurements={"duration": duration, "channel_rms_db": last_levels},
+            possible_interpretation=interpretation,
             detector=self.name,
             source_files=[ctx.source],
         )

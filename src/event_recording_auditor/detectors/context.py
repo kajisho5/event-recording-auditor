@@ -10,7 +10,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..audio.levels import LevelWindow, compute_level_envelope
+from ..audio.levels import (
+    ChannelLevelWindow,
+    LevelWindow,
+    compute_channel_level_envelope,
+    compute_level_envelope,
+)
 from ..media.ffprobe import MediaInfo, probe
 from ..slides.boundary import Segment, build_segments
 from ..slides.phash import FrameSample, hamming_distance, sample_frames
@@ -23,6 +28,9 @@ class AnalysisContext:
     media_info: MediaInfo = field(init=False)
 
     _level_envelope: list[LevelWindow] | None = field(default=None, init=False, repr=False)
+    _channel_level_envelope: list[ChannelLevelWindow] | None = field(
+        default=None, init=False, repr=False
+    )
     _frame_samples: list[FrameSample] | None = field(default=None, init=False, repr=False)
     _slide_segments: list[Segment] | None = field(default=None, init=False, repr=False)
     _slide_states: list[SlideState] | None = field(default=None, init=False, repr=False)
@@ -46,6 +54,22 @@ class AnalysisContext:
                     self.source, window=self.level_window
                 )
         return self._level_envelope
+
+    def channel_count(self) -> int:
+        if not self.media_info.audio_streams:
+            return 0
+        return int(self.media_info.audio_streams[0].get("channels", 0) or 0)
+
+    def channel_level_envelope(self) -> list[ChannelLevelWindow]:
+        if self._channel_level_envelope is None:
+            channels = self.channel_count()
+            if channels < 2:
+                self._channel_level_envelope = []
+            else:
+                self._channel_level_envelope = compute_channel_level_envelope(
+                    self.source, channels=channels, window=self.level_window
+                )
+        return self._channel_level_envelope
 
     def frame_samples(self) -> list[FrameSample]:
         if self._frame_samples is None:

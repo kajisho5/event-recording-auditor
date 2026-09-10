@@ -19,6 +19,7 @@ from .detectors import (
     AudioDropoutDetector,
     BlackoutDetector,
     BriefUnexpectedSlideDetector,
+    ChannelImbalanceDetector,
     ClippingDetector,
     Detector,
     FeedbackHowlingDetector,
@@ -31,7 +32,7 @@ from .timeline import Timeline
 
 
 def _technical_detectors() -> list[Detector]:
-    return [BlackoutDetector(), FreezeDetector(), ClippingDetector()]
+    return [BlackoutDetector(), FreezeDetector(), ClippingDetector(), ChannelImbalanceDetector()]
 
 
 def _production_detectors() -> list[Detector]:
