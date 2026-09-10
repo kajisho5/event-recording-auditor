@@ -1,11 +1,18 @@
 """Tier 2 presentation detectors built on the slide state timeline.
 
 These implement the project's core use case (see docs/detection-model.md
-and spec section 3): recognizing a state sequence like `1 -> 2 -> 1 -> 2`
-as a candidate premature-advance-and-correction, without ever asserting
-that a mistake definitely happened -- some presenters legitimately revisit
-a previous slide. See docs/false-positives.md for the calibration
-rationale.
+and spec section 3): recognizing an `A -> B -> A` slide-state revisit as a
+candidate premature-advance-and-correction, without ever asserting that a
+mistake definitely happened -- some presenters legitimately revisit a
+previous slide. The spec illustrates this as `1 -> 2 -> 1 -> 2`, but the
+detector only compares state_id equality, so it does not care which state
+is "first": the more common real-world variant is actually `2 -> 1 -> 2`,
+e.g. a camera cutaway hides the presenter advancing past the title slide
+(1), so the recording's slide feed comes on already showing slide 2, then
+briefly rolls back to slide 1 to show the missed title before returning to
+2. See `test_slide_rollback_pattern_detector_is_symmetric_in_which_state_comes_first`
+in tests/test_detectors.py for the regression test covering this
+direction. See docs/false-positives.md for the calibration rationale.
 """
 
 from __future__ import annotations

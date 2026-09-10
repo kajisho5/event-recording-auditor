@@ -191,6 +191,66 @@ def make_premature_slide_advance_clip(out_path: Path) -> Path:
     return out_path
 
 
+def make_title_slide_missed_clip(out_path: Path) -> Path:
+    """A -> B -> A but starting on B: slide B (3s) -> A (0.5s, brief) -> B (2s).
+
+    Models the more common real-world variant of the core use case than
+    `make_premature_slide_advance_clip`'s literal `A -> B -> A(-> B)`: a
+    camera cutaway (or any moment the slide feed isn't on air) hides the
+    presenter advancing past the title slide (A), so the recording's slide
+    feed comes on already showing B; someone then briefly rolls back to A
+    to show the title that was missed, before returning to B. The detector
+    logic is symmetric in which state is "A" vs "B" (it only checks for a
+    revisited state_id, see slide_detectors.py), but this fixture locks
+    that guarantee in with a regression test rather than leaving it as an
+    unverified inference from reading the code.
+    """
+    tmp = out_path.parent
+    parts = [
+        (
+            tmp / "_missed_b1.mp4",
+            "drawbox=x=180:y=130:w=120:h=90:color=orange@1.0:t=fill,drawtext=text='Title B':fontsize=24:fontcolor=black:x=20:y=200",
+            3,
+        ),
+        (
+            tmp / "_missed_a1.mp4",
+            "drawbox=x=20:y=20:w=120:h=90:color=blue@1.0:t=fill,drawtext=text='Title A':fontsize=24:fontcolor=black:x=160:y=30",
+            0.5,
+        ),
+        (
+            tmp / "_missed_b2.mp4",
+            "drawbox=x=180:y=130:w=120:h=90:color=orange@1.0:t=fill,drawtext=text='Title B':fontsize=24:fontcolor=black:x=20:y=200",
+            2,
+        ),
+    ]
+    for path, vf, duration in parts:
+        _run(
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c=white:s=320x240:d={duration}:r=4,format=yuv420p",
+            "-vf",
+            vf,
+            str(path),
+        )
+    inputs = []
+    for path, _, _ in parts:
+        inputs += ["-i", str(path)]
+    n = len(parts)
+    filter_inputs = "".join(f"[{i}:v]" for i in range(n))
+    _run(
+        *inputs,
+        "-filter_complex",
+        f"{filter_inputs}concat=n={n}:v=1:a=0[v]",
+        "-map",
+        "[v]",
+        str(out_path),
+    )
+    for path, _, _ in parts:
+        path.unlink(missing_ok=True)
+    return out_path
+
+
 def make_continuously_changing_clip(out_path: Path, duration: float = 5.0) -> Path:
     """Video that changes every frame, standing in for "ordinary" (non-slide)
     footage such as camera work or broadcast content -- used to check that
@@ -289,6 +349,7 @@ def generate_all(out_dir: Path) -> dict[str, Path]:
         "channel_dropout": make_channel_dropout_audio(out_dir / "channel_dropout.wav"),
         "channel_balanced": make_channel_balanced_audio(out_dir / "channel_balanced.wav"),
         "premature_slide_advance": make_premature_slide_advance_clip(out_dir / "premature_slide_advance.mp4"),
+        "title_slide_missed": make_title_slide_missed_clip(out_dir / "title_slide_missed.mp4"),
         "quiet_static": make_quiet_static_clip(out_dir / "quiet_static.mp4"),
         "continuously_changing": make_continuously_changing_clip(out_dir / "continuously_changing.mp4"),
         "portrait_cutaway": make_portrait_cutaway_clip(out_dir / "portrait_cutaway.mp4"),

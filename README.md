@@ -115,7 +115,7 @@ plan, delivery spec) and how to phrase findings responsibly.
 |---|---|
 | Video (Tier 1) | Blackout, freeze (audio-correlated) |
 | Audio (Tier 1/2) | Clipping, channel imbalance/missing-channel, context-aware possible audio dropout |
-| Presentation (Tier 2) | Slide rollback pattern (the `1 -> 2 -> 1 -> 2` core use case), brief unexpected slide |
+| Presentation (Tier 2) | Slide rollback pattern (an `A -> B -> A` revisit, e.g. `1 -> 2 -> 1 -> 2` or, just as commonly, `2 -> 1 -> 2` when a camera cutaway hides the presenter advancing past the title slide), brief unexpected slide |
 | Progress (Tier 2) | Progression interruption (camera + audio + slide correlation) |
 | Audio (Tier 3, experimental, opt-in) | Possible feedback/howling |
 | Post-production | Source-vs-export metadata diff + SSIM/PSNR comparison |
