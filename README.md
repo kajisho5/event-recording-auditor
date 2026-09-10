@@ -2,9 +2,12 @@
 
 **Deterministic, evidence-first incident detection for recorded event footage.**
 
+Local FFmpeg · Fully offline, no network calls · No API keys
+
 [![tests](https://github.com/kajisho5/event-recording-auditor/actions/workflows/tests.yml/badge.svg)](https://github.com/kajisho5/event-recording-auditor/actions/workflows/tests.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/kajisho5/event-recording-auditor/pkgs/container/event-recording-auditor)
+[![Offline: no network calls](https://img.shields.io/badge/network-none-lightgrey)](#requirements)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Contents**
