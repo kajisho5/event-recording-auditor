@@ -63,5 +63,14 @@ jobs:
           # specifically to prevent recursive workflow runs. release.yml and
           # docker.yml both also declare `workflow_dispatch`, so trigger them
           # explicitly instead of relying on the (silently no-op) push event.
-          gh workflow run release.yml --ref "$TAG"
-          gh workflow run docker.yml --ref "$TAG"
+          #
+          # Dispatch against `ref: main`, not "$TAG": a workflow's
+          # workflow_dispatch eligibility is checked against its copy of the
+          # file AT THE GIVEN REF, so dispatching against a tag only works if
+          # that tag's own snapshot already has this trigger -- true here
+          # since the tag was just cut from main's current tip, but not
+          # something worth depending on. main always has it. The tag to
+          # operate on is instead passed explicitly via the `tag` input,
+          # since `ref: main` makes `github.ref_name` say "main".
+          gh workflow run release.yml --ref main -f tag="$TAG"
+          gh workflow run docker.yml --ref main -f tag="$TAG"

@@ -18,7 +18,20 @@ on:
   # GITHUB_TOKEN-authored push from cascading into other workflows' event
   # triggers, to prevent recursive runs. That workflow explicitly dispatches
   # this one (`gh workflow run release.yml --ref vX.Y.Z`) instead.
+  #
+  # A manual run must target `ref: main` (a workflow's `workflow_dispatch`
+  # eligibility is checked against its copy of the file AT THE GIVEN REF, not
+  # against the default branch -- dispatching against an old tag whose copy
+  # predates this trigger being added fails with "Workflow does not have
+  # 'workflow_dispatch' trigger"). Since `ref: main` means `github.ref_name`
+  # is "main", not the tag to release, the tag must be passed explicitly via
+  # this input instead.
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, e.g. v0.1.0-beta (must already exist)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -26,9 +39,12 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.TAG }}
           fetch-depth: 0
 
       - name: Create GitHub Release
@@ -37,14 +53,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PRERELEASE_FLAG=""
-          if [[ "${{ github.ref_name }}" == *-* ]]; then
+          if [[ "$TAG" == *-* ]]; then
             PRERELEASE_FLAG="--prerelease"
           fi
-          gh release create "${{ github.ref_name }}" \
-            --title "${{ github.ref_name }}" \
+          gh release create "$TAG" \
+            --title "$TAG" \
             --generate-notes \
             $PRERELEASE_FLAG
-          gh release view "${{ github.ref_name }}" --json body -q .body > /tmp/release-notes.md
+          gh release view "$TAG" --json body -q .body > /tmp/release-notes.md
 
       - name: Record the release in CHANGELOG.md
         env:
@@ -61,7 +77,7 @@ jobs:
           git reset --hard origin/main
 
           {
-            echo "## ${{ github.ref_name }} - $(date -u +%Y-%m-%d)"
+            echo "## $TAG - $(date -u +%Y-%m-%d)"
             echo
             cat /tmp/release-notes.md
           } > /tmp/new-entry.md
@@ -74,5 +90,5 @@ jobs:
           mv /tmp/CHANGELOG.new CHANGELOG.md
 
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG.md for ${{ github.ref_name }}"
+          git commit -m "Update CHANGELOG.md for $TAG"
           git push origin main
