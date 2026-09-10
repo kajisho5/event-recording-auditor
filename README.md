@@ -109,6 +109,65 @@ See [`SKILL.md`](SKILL.md) for the full Agent-facing workflow, including
 when to ask for additional reference data (expected slide order, switching
 plan, delivery spec) and how to phrase findings responsibly.
 
+## Example output
+
+Real `report.md` output (unedited) from running `analyze` against the
+`premature_slide_advance` synthetic fixture used in the test suite
+(`examples/generate_synthetic_fixtures.py`) -- a slide held for 3s, briefly
+advanced for 0.5s, rolled back for 2s, then advanced again for 3s:
+
+```
+# Event Recording Audit
+
+**File:** `premature_slide_advance.mp4`
+**Duration:** 00:00:08.500
+**Total findings:** 4 (high: 0, medium: 4, low: 0)
+
+## Timeline
+
+| Time | Duration | Category | Severity | Confidence | Type |
+|---|---|---|---|---|---|
+| 00:00:00.000 - 00:00:03.000 | 3.00s | video | medium | medium | freeze |
+| 00:00:03.000 - 00:00:03.500 | 0.50s | presentation | medium | low | brief_unexpected_slide |
+| 00:00:03.000 - 00:00:05.500 | 2.50s | presentation | medium | medium | slide_rollback_pattern |
+| 00:00:03.500 - 00:00:05.500 | 2.00s | video | medium | medium | freeze |
+```
+
+The core use case's finding, in full:
+
+```
+### 00:00:03.000 - 00:00:05.500 (2.50s) -- MEDIUM / slide_rollback_pattern
+
+- **Category**: presentation
+- **Confidence**: medium
+- **Detector**: slide_rollback_pattern
+
+**Observed:**
+- Slide state 0 was displayed for 3.00s.
+- Slide state 1 then appeared for 0.50s.
+- The recording returned to slide state 0 for 2.00s.
+- Slide state 1 appeared again afterward, this time for 3.00s.
+
+**Possible interpretation:** Consistent with a premature slide advance
+followed by an operator/presenter correction: the first appearance of the
+later slide was brief compared to its return.
+
+**Human verification required.**
+
+**Evidence:** [before_frame](...) · [event_frame](...) · [after_frame](...)
+· [clip](...) · [metadata](...) · [explanation](...)
+```
+
+Each finding also links to an `evidence/incident-NNNN/` package (before/
+event/after frame stills, a short clip, and metadata) so a reviewer can
+verify without re-scrubbing the full recording. Note the two `freeze`
+findings alongside the slide finding: this is a static-camera synthetic
+clip with no audio, so the frozen-video detector fires on the same
+intervals for a different reason -- a real correlated freeze/audio-dropout
+incident would look different in practice, and is exactly the kind of
+overlap a human reviewer is meant to resolve, per the "what this does not
+do" note above.
+
 ## What's implemented today
 
 | Category | Detectors |
