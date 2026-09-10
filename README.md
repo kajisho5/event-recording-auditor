@@ -39,7 +39,10 @@ Audit a recording for in-event production incidents:
 event-recording-auditor analyze RECORDING.mp4 --out-dir audit-output
 ```
 
-Writes `audit-output/report.json`, `audit-output/report.html`, and (unless
+Writes `audit-output/report.json`, `audit-output/report.html`,
+`audit-output/report.md` (a plain-text/Markdown version with the same
+timeline table and per-finding detail -- easy to paste into a chat or
+ticket), and (unless
 `--no-evidence` is passed) `audit-output/evidence/incident-NNNN/` packages
 for each significant finding.
 

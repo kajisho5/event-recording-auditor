@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .pipeline import PROFILES, run_pipeline
 from .postproduction import compare_source_and_export
-from .reporting import write_html_report, write_json_report
+from .reporting import write_html_report, write_json_report, write_markdown_report
 
 
 def _media_summary(ctx) -> dict:
@@ -49,11 +49,15 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     html_path = write_html_report(
         result.timeline, media_summary, out_dir / "report.html", result.limitations
     )
+    markdown_path = write_markdown_report(
+        result.timeline, media_summary, out_dir / "report.md", result.limitations
+    )
 
     print(f"Analyzed {args.source}")
     print(f"  {len(result.timeline)} anomaly candidate(s) found")
     print(f"  JSON report: {json_path}")
     print(f"  HTML report: {html_path}")
+    print(f"  Markdown report: {markdown_path}")
     for limitation in result.limitations:
         print(f"  Note: {limitation}")
     return 0

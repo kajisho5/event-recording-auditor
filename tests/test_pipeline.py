@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from event_recording_auditor.pipeline import run_pipeline
-from event_recording_auditor.reporting import write_html_report, write_json_report
+from event_recording_auditor.reporting import (
+    write_html_report,
+    write_json_report,
+    write_markdown_report,
+)
 
 
 def test_pipeline_runs_full_profile_and_writes_reports(premature_slide_advance_clip, tmp_path):
@@ -21,10 +25,18 @@ def test_pipeline_runs_full_profile_and_writes_reports(premature_slide_advance_c
     media_summary = {"path": result.context.source, "duration": result.context.media_info.duration}
     json_path = write_json_report(result.timeline, media_summary, tmp_path / "report.json")
     html_path = write_html_report(result.timeline, media_summary, tmp_path / "report.html")
+    md_path = write_markdown_report(
+        result.timeline, media_summary, tmp_path / "report.md", result.limitations
+    )
 
     assert json_path.exists()
     assert html_path.exists()
     assert "slide_rollback_pattern" in html_path.read_text()
+
+    md_text = md_path.read_text()
+    assert "slide_rollback_pattern" in md_text
+    assert "| Time | Duration | Category | Severity | Confidence | Type |" in md_text
+    assert "## Limitations" in md_text
 
 
 def test_pipeline_populates_evidence_for_qualifying_events(premature_slide_advance_clip, tmp_path):

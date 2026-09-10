@@ -72,6 +72,9 @@ python -m event_recording_auditor.cli analyze RECORDING.mp4 \
 Read `audit-output/report.json` for the structured findings and summarize
 for the user. Point to `audit-output/report.html` as the human-reviewable
 artifact -- offer to open/share it rather than pasting the whole JSON.
+`audit-output/report.md` has the same content in Markdown; prefer sending
+or quoting that (or the file directly) over reconstructing a summary by
+hand when the user wants something to paste elsewhere.
 
 ### Reading and reporting results
 

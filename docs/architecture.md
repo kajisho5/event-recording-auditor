@@ -44,7 +44,7 @@ since it's a fundamentally different comparison, not an anomaly scan.
 | `timeline/` | The `Event` schema and `Timeline` collection -- see docs/event-schema.md. |
 | `detectors/` | One class per anomaly type; shares an `AnalysisContext` for expensive intermediate data. |
 | `evidence/` | Turns a significant `Event` into an `incident-NNNN/` evidence package. |
-| `reporting/` | `report.json` and `report.html` generation. |
+| `reporting/` | `report.json`, `report.html`, and `report.md` generation. |
 | `postproduction/` | Source-vs-export metadata diff + SSIM/PSNR comparison and classification. |
 | `pipeline.py` | Named detector profiles (spec section 32) and the run loop that turns exceptions into recorded limitations instead of crashes. |
 | `cli.py` | `analyze` and `compare` subcommands. |

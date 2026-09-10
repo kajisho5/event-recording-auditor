@@ -2,7 +2,7 @@
 
 Every detector emits `Event` objects (`src/event_recording_auditor/timeline/event.py`).
 This is the single schema all reports (`report.json`, `report.html`,
-evidence packages) are built from.
+`report.md`, evidence packages) are built from.
 
 ```json
 {
