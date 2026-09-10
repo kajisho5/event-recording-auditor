@@ -1,5 +1,17 @@
 # Event Recording Auditor
 
+**Deterministic, evidence-first incident detection for recorded event footage.**
+
+[![tests](https://github.com/kajisho5/event-recording-auditor/actions/workflows/tests.yml/badge.svg)](https://github.com/kajisho5/event-recording-auditor/actions/workflows/tests.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/kajisho5/event-recording-auditor/pkgs/container/event-recording-auditor)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+**Contents**
+[Requirements](#requirements) · [Install](#install) · [Usage](#usage) · [Example output](#example-output) · [What's implemented today](#whats-implemented-today) · [Development](#development) · [Documentation](#documentation)
+
+---
+
 > **Beta.** Runs fully locally (no network calls -- see "Requirements"
 > below; the only hard dependency is the `ffmpeg`/`ffprobe` binaries).
 > What's been validated so far: false-positive behavior against a small
@@ -229,12 +241,15 @@ git push origin v0.1.0-beta
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) -- pipeline, module map, dependency rationale.
-- [`docs/detection-model.md`](docs/detection-model.md) -- severity/confidence model, detector tiers, what's implemented.
-- [`docs/event-schema.md`](docs/event-schema.md) -- the `Event` schema every detector emits.
-- [`docs/false-positives.md`](docs/false-positives.md) -- false-positive classes and mitigations.
-- [`docs/research.md`](docs/research.md) -- prior art / competitive landscape review.
-- [`CHANGELOG.md`](CHANGELOG.md) -- auto-generated on every release.
+| | |
+|---|---|
+| [SKILL.md](SKILL.md) | the full Agent-facing workflow: when to ask for reference data, how to phrase findings responsibly |
+| [docs/architecture.md](docs/architecture.md) | pipeline, module map, dependency rationale |
+| [docs/detection-model.md](docs/detection-model.md) | severity/confidence model, detector tiers, what's implemented |
+| [docs/event-schema.md](docs/event-schema.md) | the `Event` schema every detector emits |
+| [docs/false-positives.md](docs/false-positives.md) | false-positive classes and mitigations |
+| [docs/research.md](docs/research.md) | prior art / competitive landscape review |
+| [CHANGELOG.md](CHANGELOG.md) | auto-generated on every release |
 
 ## License
 
