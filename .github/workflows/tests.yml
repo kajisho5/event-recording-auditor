@@ -6,6 +6,25 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install "ruff>=0.6"
+
+      - name: Ruff check
+        run: ruff check src/ tests/ examples/
+
+      - name: Ruff format check
+        run: ruff format --check src/ tests/ examples/
+
   pytest:
     runs-on: ubuntu-latest
     steps:
