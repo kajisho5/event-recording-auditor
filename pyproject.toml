@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "event-recording-auditor"
+version = "0.1.0"
+description = "Evidence-first, deterministic anomaly detection for recorded event footage."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+# Only needed for the experimental feedback/howling detector's windowed
+# FFT (see docs/architecture.md "Dependencies" and
+# src/event_recording_auditor/detectors/feedback.py). Everything else in
+# this project depends on the ffmpeg/ffprobe binaries plus the Python
+# standard library.
+feedback = ["numpy>=1.24"]
+dev = ["pytest>=7.4", "numpy>=1.24"]
+
+[project.scripts]
+event-recording-auditor = "event_recording_auditor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
