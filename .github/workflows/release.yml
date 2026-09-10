@@ -13,6 +13,12 @@ on:
   push:
     tags:
       - "v*"
+  # A tag pushed by tag-on-version-bump.yml (using the default GITHUB_TOKEN)
+  # does not fire the `push: tags:` trigger above -- GitHub blocks a
+  # GITHUB_TOKEN-authored push from cascading into other workflows' event
+  # triggers, to prevent recursive runs. That workflow explicitly dispatches
+  # this one (`gh workflow run release.yml --ref vX.Y.Z`) instead.
+  workflow_dispatch:
 
 permissions:
   contents: write
