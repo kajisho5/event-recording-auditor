@@ -114,8 +114,6 @@ def extract_evidence_for_timeline(
         if not event.source_files:
             continue
         try:
-            event.evidence = build_evidence_package(
-                event, out_dir, index, include_clip=include_clip
-            )
+            event.evidence = build_evidence_package(event, out_dir, index, include_clip=include_clip)
         except Exception as exc:  # noqa: BLE001 - evidence extraction is best-effort
             event.evidence = {"error": str(exc)}

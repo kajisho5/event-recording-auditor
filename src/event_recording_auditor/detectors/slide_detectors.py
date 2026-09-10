@@ -32,9 +32,7 @@ MIN_SLIDE_STABILITY_RATIO = 0.35
 MIN_PRESENTATION_ASPECT_RATIO = 1.2
 
 
-def _non_presentation_reason(
-    ctx: AnalysisContext, min_stability_ratio: float
-) -> str | None:
+def _non_presentation_reason(ctx: AnalysisContext, min_stability_ratio: float) -> str | None:
     """Return why `ctx` doesn't look like slide/presentation content, or
     None if the presentation detectors' assumptions plausibly hold."""
     aspect = ctx.aspect_ratio()
@@ -93,10 +91,7 @@ class SlideRollbackPatternDetector(Detector):
 
     def _build_event(self, ctx: AnalysisContext, states: list[SlideState], i: int) -> Event:
         a, b, a2 = states[i], states[i + 1], states[i + 2]
-        has_repeat = (
-            i + 3 < len(states)
-            and states[i + 3].state_id == b.state_id
-        )
+        has_repeat = i + 3 < len(states) and states[i + 3].state_id == b.state_id
         first_b_brief = b.duration < self.brief_duration_threshold
 
         sequence_ids = [a.state_id, b.state_id, a2.state_id]
@@ -108,8 +103,7 @@ class SlideRollbackPatternDetector(Detector):
         observations = [
             f"Slide state {a.state_id} was displayed for {a.duration:.2f}s.",
             f"Slide state {b.state_id} then appeared for {b.duration:.2f}s.",
-            f"The recording returned to slide state {a.state_id} "
-            f"for {a2.duration:.2f}s.",
+            f"The recording returned to slide state {a.state_id} for {a2.duration:.2f}s.",
         ]
         if has_repeat:
             observations.append(

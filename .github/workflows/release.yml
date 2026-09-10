@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create GitHub Release
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -37,3 +38,35 @@ jobs:
             --title "${{ github.ref_name }}" \
             --generate-notes \
             $PRERELEASE_FLAG
+          gh release view "${{ github.ref_name }}" --json body -q .body > /tmp/release-notes.md
+
+      - name: Record the release in CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # The tag can be behind main's current tip by the time this runs;
+          # commit the changelog entry onto main's actual tip, not the
+          # (possibly older) tagged commit.
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+          {
+            echo "## ${{ github.ref_name }} - $(date -u +%Y-%m-%d)"
+            echo
+            cat /tmp/release-notes.md
+          } > /tmp/new-entry.md
+
+          if [ -f CHANGELOG.md ]; then
+            { head -n 1 CHANGELOG.md; echo; cat /tmp/new-entry.md; echo; tail -n +2 CHANGELOG.md; } > /tmp/CHANGELOG.new
+          else
+            { echo "# Changelog"; echo; cat /tmp/new-entry.md; } > /tmp/CHANGELOG.new
+          fi
+          mv /tmp/CHANGELOG.new CHANGELOG.md
+
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG.md for ${{ github.ref_name }}"
+          git push origin main

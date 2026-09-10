@@ -44,9 +44,7 @@ def detect_black(
             (ffmpeg `d`). Short flashes below this are ignored as noise.
     """
     filt = (
-        f"blackdetect=d={min_duration}:"
-        f"pic_th={picture_black_ratio_threshold}:"
-        f"pix_th={pixel_black_threshold}"
+        f"blackdetect=d={min_duration}:pic_th={picture_black_ratio_threshold}:pix_th={pixel_black_threshold}"
     )
     args = ["-i", source, "-vf", filt, "-an", "-f", "null", "-"]
     proc = run_ffmpeg(args, timeout=timeout)

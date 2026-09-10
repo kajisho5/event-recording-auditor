@@ -1,6 +1,12 @@
 import pytest
 
-from event_recording_auditor.timeline import Category, Confidence, Event, Severity, Timeline
+from event_recording_auditor.timeline import (
+    Category,
+    Confidence,
+    Event,
+    Severity,
+    Timeline,
+)
 
 
 def test_event_rejects_end_before_start():
@@ -37,14 +43,22 @@ def test_timeline_sorts_and_summarizes():
     tl = Timeline()
     tl.add(
         Event(
-            start=10.0, end=11.0, category=Category.AUDIO, type="clipping",
-            severity=Severity.HIGH, confidence=Confidence.HIGH,
+            start=10.0,
+            end=11.0,
+            category=Category.AUDIO,
+            type="clipping",
+            severity=Severity.HIGH,
+            confidence=Confidence.HIGH,
         )
     )
     tl.add(
         Event(
-            start=1.0, end=2.0, category=Category.VIDEO, type="blackout",
-            severity=Severity.LOW, confidence=Confidence.LOW,
+            start=1.0,
+            end=2.0,
+            category=Category.VIDEO,
+            type="blackout",
+            severity=Severity.LOW,
+            confidence=Confidence.LOW,
         )
     )
     events = tl.events

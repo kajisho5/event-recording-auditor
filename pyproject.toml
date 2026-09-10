@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "event-recording-auditor"
-version = "0.1.0"
+version = "0.1.0-beta"
 description = "Evidence-first, deterministic anomaly detection for recorded event footage."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,7 +18,7 @@ dependencies = []
 # this project depends on the ffmpeg/ffprobe binaries plus the Python
 # standard library.
 feedback = ["numpy>=1.24"]
-dev = ["pytest>=7.4", "numpy>=1.24"]
+dev = ["pytest>=7.4", "numpy>=1.24", "ruff>=0.6"]
 
 [project.scripts]
 event-recording-auditor = "event_recording_auditor.cli:main"
@@ -28,3 +28,16 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Long ffmpeg filter-graph strings and HTML template literals read worse
+# split across lines than left as one long line.
+"examples/generate_synthetic_fixtures.py" = ["E501"]
+"src/event_recording_auditor/reporting/html_report.py" = ["E501"]

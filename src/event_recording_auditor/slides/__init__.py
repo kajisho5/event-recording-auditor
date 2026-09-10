@@ -1,5 +1,5 @@
-from .phash import FrameSample, hamming_distance, sample_frames
 from .boundary import Segment, build_segments
+from .phash import FrameSample, hamming_distance, sample_frames
 from .timeline import SlideState, build_slide_timeline
 
 __all__ = [

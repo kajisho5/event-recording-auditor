@@ -17,21 +17,53 @@ def source_and_exports(tmp_path_factory):
     out = tmp_path_factory.mktemp("postprod")
     source = out / "source.mp4"
     subprocess.run(
-        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=size=320x240:rate=5:duration=2",
-         str(source)],
-        check=True, capture_output=True,
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=320x240:rate=5:duration=2",
+            str(source),
+        ],
+        check=True,
+        capture_output=True,
     )
     good_export = out / "export_good.mp4"
     subprocess.run(
-        ["ffmpeg", "-y", "-i", str(source), "-vf", "scale=160:120",
-         "-c:v", "libx264", "-crf", "18", str(good_export)],
-        check=True, capture_output=True,
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(source),
+            "-vf",
+            "scale=160:120",
+            "-c:v",
+            "libx264",
+            "-crf",
+            "18",
+            str(good_export),
+        ],
+        check=True,
+        capture_output=True,
     )
     bad_export = out / "export_bad.mp4"
     subprocess.run(
-        ["ffmpeg", "-y", "-i", str(source), "-vf", "scale=160:120",
-         "-c:v", "libx264", "-b:v", "3k", str(bad_export)],
-        check=True, capture_output=True,
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(source),
+            "-vf",
+            "scale=160:120",
+            "-c:v",
+            "libx264",
+            "-b:v",
+            "3k",
+            str(bad_export),
+        ],
+        check=True,
+        capture_output=True,
     )
     return str(source), str(good_export), str(bad_export)
 

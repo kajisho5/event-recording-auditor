@@ -22,8 +22,7 @@ def ffmpeg_bin() -> str:
     path = shutil.which("ffmpeg")
     if not path:
         raise FFmpegNotFoundError(
-            "ffmpeg was not found on PATH. Install FFmpeg to use "
-            "event-recording-auditor's detectors."
+            "ffmpeg was not found on PATH. Install FFmpeg to use event-recording-auditor's detectors."
         )
     return path
 
@@ -41,30 +40,22 @@ def run_ffmpeg(
     """
     cmd = [ffmpeg_bin(), *args]
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout, check=False
-        )
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired as exc:
         raise FFmpegError(f"ffmpeg timed out: {' '.join(cmd)}") from exc
 
     if check_returncode and proc.returncode != 0:
-        raise FFmpegError(
-            f"ffmpeg failed (exit {proc.returncode}): {' '.join(cmd)}\n{proc.stderr}"
-        )
+        raise FFmpegError(f"ffmpeg failed (exit {proc.returncode}): {' '.join(cmd)}\n{proc.stderr}")
     return proc
 
 
-def run_ffmpeg_binary(
-    args: list[str], timeout: float | None = None
-) -> tuple[bytes, str, int]:
+def run_ffmpeg_binary(args: list[str], timeout: float | None = None) -> tuple[bytes, str, int]:
     """Like run_ffmpeg, but returns raw stdout bytes (for rawvideo/PCM pipes)
     alongside decoded stderr text and the return code.
     """
     cmd = [ffmpeg_bin(), *args]
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, timeout=timeout, check=False
-        )
+        proc = subprocess.run(cmd, capture_output=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired as exc:
         raise FFmpegError(f"ffmpeg timed out: {' '.join(cmd)}") from exc
     stderr_text = proc.stderr.decode("utf-8", errors="replace")

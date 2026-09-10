@@ -32,7 +32,12 @@ from .timeline import Timeline
 
 
 def _technical_detectors() -> list[Detector]:
-    return [BlackoutDetector(), FreezeDetector(), ClippingDetector(), ChannelImbalanceDetector()]
+    return [
+        BlackoutDetector(),
+        FreezeDetector(),
+        ClippingDetector(),
+        ChannelImbalanceDetector(),
+    ]
 
 
 def _production_detectors() -> list[Detector]:
@@ -49,7 +54,7 @@ def _post_production_detectors() -> list[Detector]:
     return []
 
 
-PROFILES: dict[str, "callable"] = {
+PROFILES: dict[str, callable] = {
     "technical": _technical_detectors,
     "production": _production_detectors,
     "presentation": _presentation_detectors,
@@ -106,14 +111,10 @@ def run_pipeline(
 
     for detector in detectors:
         if "video" in detector.requires and not ctx.media_info.has_video:
-            limitations.append(
-                f"Detector '{detector.name}' skipped: input has no video stream."
-            )
+            limitations.append(f"Detector '{detector.name}' skipped: input has no video stream.")
             continue
         if detector.requires == "audio" and not ctx.media_info.has_audio:
-            limitations.append(
-                f"Detector '{detector.name}' skipped: input has no audio stream."
-            )
+            limitations.append(f"Detector '{detector.name}' skipped: input has no audio stream.")
             continue
         try:
             events = detector.run(ctx)

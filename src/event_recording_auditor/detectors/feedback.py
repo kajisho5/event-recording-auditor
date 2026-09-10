@@ -36,7 +36,7 @@ class _SpectralWindow:
     rms: float
 
 
-def _decode_pcm(source: str, sample_rate: int = 22050) -> "list[int]":
+def _decode_pcm(source: str, sample_rate: int = 22050) -> list[int]:
     args = ["-i", source, "-ac", "1", "-ar", str(sample_rate), "-f", "s16le", "-"]
     stdout, stderr, returncode = run_ffmpeg_binary(args)
     if returncode != 0:
@@ -56,8 +56,7 @@ def _analyze_windows(
         import numpy as np
     except ImportError as exc:
         raise FeedbackDependencyMissing(
-            "numpy is required for the experimental feedback/howling detector "
-            "but is not installed."
+            "numpy is required for the experimental feedback/howling detector but is not installed."
         ) from exc
 
     samples = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float64)
@@ -141,9 +140,7 @@ class FeedbackHowlingDetector(Detector):
             return []
 
         candidates = [
-            w
-            for w in windows
-            if w.concentration >= self.concentration_threshold and w.rms >= self.min_rms
+            w for w in windows if w.concentration >= self.concentration_threshold and w.rms >= self.min_rms
         ]
         if not candidates:
             return []
@@ -167,8 +164,7 @@ class FeedbackHowlingDetector(Detector):
                 severity=Severity.MEDIUM,
                 confidence=Confidence.MEDIUM if max_concentration >= 0.6 else Confidence.LOW,
                 observations=[
-                    f"A narrow-band spectral peak near {avg_freq:.0f} Hz persisted "
-                    f"for {duration:.2f}s.",
+                    f"A narrow-band spectral peak near {avg_freq:.0f} Hz persisted for {duration:.2f}s.",
                     f"Peak-band energy concentration reached {max_concentration:.0%} "
                     "of total in-band energy.",
                 ],

@@ -53,8 +53,8 @@ class ProgressionInterruptionDetector(Detector):
         events = []
         run_start_bucket = None
         for i in range(n_buckets):
-            all_quiet = visual_inactive[i] and slide_unchanged[i] and (
-                audio_inactive[i] if has_audio_track else True
+            all_quiet = (
+                visual_inactive[i] and slide_unchanged[i] and (audio_inactive[i] if has_audio_track else True)
             )
             if all_quiet:
                 if run_start_bucket is None:
@@ -64,9 +64,7 @@ class ProgressionInterruptionDetector(Detector):
                     events.append(self._maybe_build_event(ctx, run_start_bucket, i, has_audio_track))
                 run_start_bucket = None
         if run_start_bucket is not None:
-            events.append(
-                self._maybe_build_event(ctx, run_start_bucket, n_buckets, has_audio_track)
-            )
+            events.append(self._maybe_build_event(ctx, run_start_bucket, n_buckets, has_audio_track))
 
         return [e for e in events if e is not None]
 
@@ -130,7 +128,5 @@ class ProgressionInterruptionDetector(Detector):
     def _slide_unchanged(self, slide_states, bucket_index: int) -> bool:
         start = bucket_index * self.bucket
         end = start + self.bucket
-        overlapping_states = {
-            s.state_id for s in slide_states if s.end > start and s.start < end
-        }
+        overlapping_states = {s.state_id for s in slide_states if s.end > start and s.start < end}
         return len(overlapping_states) <= 1

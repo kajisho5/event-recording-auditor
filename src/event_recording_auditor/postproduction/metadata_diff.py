@@ -47,9 +47,5 @@ def _video_fields(info: MediaInfo) -> dict[str, Any]:
 def diff_metadata(source: MediaInfo, export: MediaInfo) -> MetadataDiff:
     source_fields = _video_fields(source)
     export_fields = _video_fields(export)
-    changed = [
-        key
-        for key in source_fields
-        if source_fields[key] != export_fields.get(key)
-    ]
+    changed = [key for key in source_fields if source_fields[key] != export_fields.get(key)]
     return MetadataDiff(source=source_fields, export=export_fields, changed_fields=changed)

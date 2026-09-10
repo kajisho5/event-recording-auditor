@@ -42,6 +42,17 @@ pip install -e .
 pip install -e ".[feedback]"
 ```
 
+Or use the prebuilt Docker image (ffmpeg included, nothing else to
+install) -- published to GHCR on every tagged release:
+
+```bash
+docker run --rm -v "$PWD":/data ghcr.io/kajisho5/event-recording-auditor:latest \
+  analyze /data/recording.mp4 --out-dir /data/audit-output
+```
+
+`:latest` tracks the newest non-beta release; pin a specific version
+(e.g. `:v0.1.0-beta`) for reproducibility.
+
 ## Usage
 
 Audit a recording for in-event production incidents:
@@ -117,26 +128,45 @@ picture, including what's deliberately not implemented yet and why.
 ```bash
 pip install -e ".[dev]"
 pytest
+ruff check src/ tests/ examples/    # lint
+ruff format src/ tests/ examples/   # apply formatting (or --check to only verify)
 ```
 
-Tests generate their own small synthetic media fixtures via
+Both `pytest` and `ruff check`/`ruff format --check` run in CI
+(`.github/workflows/tests.yml`) on every push and PR. Tests generate their
+own small synthetic media fixtures via
 [`examples/generate_synthetic_fixtures.py`](examples/generate_synthetic_fixtures.py)
 (ffmpeg `lavfi` sources) rather than committing binary test media.
+[Dependabot](.github/dependabot.yml) opens weekly update PRs for GitHub
+Actions versions and Python dependencies.
 
 ### Releasing a version
 
-Push a tag matching `v*`:
+The usual path: bump `version` in `pyproject.toml` in a PR (e.g.
+`"0.1.0-beta"` -> `"0.2.0"`) and merge it to `main`. Everything after that
+is automatic:
+
+1. `.github/workflows/tag-on-version-bump.yml` notices the version string
+   changed and pushes a `v<version>` tag.
+2. That tag push triggers `.github/workflows/release.yml`, which creates
+   the GitHub Release with auto-generated notes (from the commits/PRs
+   merged since the previous tag -- never hand-written) and prepends an
+   entry to [`CHANGELOG.md`](CHANGELOG.md). A tag with a hyphen (e.g.
+   `v0.1.0-beta`, semver's pre-release convention) is published as a
+   pre-release.
+3. The same tag push triggers `.github/workflows/docker.yml`, which
+   builds and pushes the image to
+   `ghcr.io/kajisho5/event-recording-auditor`, moving the `:latest` tag
+   only for non-pre-release versions.
+
+To publish a version without going through a version-bump PR (e.g. to tag
+an existing commit), push the tag directly instead and steps 2-3 above
+still fire the same way:
 
 ```bash
 git tag v0.1.0-beta
 git push origin v0.1.0-beta
 ```
-
-`.github/workflows/release.yml` picks it up and creates the GitHub
-Release automatically, with release notes generated from the commits/PRs
-merged since the previous tag -- no need to hand-write them. A tag with a
-hyphen (e.g. `v0.1.0-beta`, per semver's pre-release convention) is
-published as a pre-release; a plain `vX.Y.Z` tag is a normal release.
 
 ## Documentation
 
@@ -145,6 +175,7 @@ published as a pre-release; a plain `vX.Y.Z` tag is a normal release.
 - [`docs/event-schema.md`](docs/event-schema.md) -- the `Event` schema every detector emits.
 - [`docs/false-positives.md`](docs/false-positives.md) -- false-positive classes and mitigations.
 - [`docs/research.md`](docs/research.md) -- prior art / competitive landscape review.
+- [`CHANGELOG.md`](CHANGELOG.md) -- auto-generated on every release.
 
 ## License
 

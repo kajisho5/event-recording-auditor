@@ -44,9 +44,7 @@ def detect_freeze(
     proc = run_ffmpeg(args, timeout=timeout)
 
     starts = [float(m.group("start")) for m in _FREEZE_START_RE.finditer(proc.stderr)]
-    durations = [
-        float(m.group("duration")) for m in _FREEZE_DURATION_RE.finditer(proc.stderr)
-    ]
+    durations = [float(m.group("duration")) for m in _FREEZE_DURATION_RE.finditer(proc.stderr)]
     ends = [float(m.group("end")) for m in _FREEZE_END_RE.finditer(proc.stderr)]
 
     segments: list[FreezeSegment] = []

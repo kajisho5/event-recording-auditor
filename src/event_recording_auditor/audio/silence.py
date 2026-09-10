@@ -8,9 +8,7 @@ from dataclasses import dataclass
 from ..media.runner import run_ffmpeg
 
 _START_RE = re.compile(r"silence_start:\s*(?P<start>-?[\d.]+)")
-_END_RE = re.compile(
-    r"silence_end:\s*(?P<end>-?[\d.]+)\s*\|\s*silence_duration:\s*(?P<duration>[\d.]+)"
-)
+_END_RE = re.compile(r"silence_end:\s*(?P<end>-?[\d.]+)\s*\|\s*silence_duration:\s*(?P<duration>[\d.]+)")
 
 
 @dataclass
@@ -58,9 +56,7 @@ def detect_silence(
     segments: list[SilenceSegment] = []
     for i, start in enumerate(starts):
         if i < len(ends):
-            segments.append(
-                SilenceSegment(start=start, end=ends[i], duration=durations[i])
-            )
+            segments.append(SilenceSegment(start=start, end=ends[i], duration=durations[i]))
         # else: silence runs to EOF without an explicit silence_end line;
         # skip rather than guess an end time.
     return segments

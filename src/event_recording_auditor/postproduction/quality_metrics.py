@@ -16,9 +16,7 @@ from dataclasses import dataclass
 from ..media.runner import run_ffmpeg
 
 _SSIM_RE = re.compile(r"All:(?P<all>[\d.]+)\s+\((?P<db>[\d.]+|inf)\)")
-_PSNR_RE = re.compile(
-    r"average:(?P<avg>[\d.]+|inf)\s+min:(?P<min>[\d.]+|inf)\s+max:(?P<max>[\d.]+|inf)"
-)
+_PSNR_RE = re.compile(r"average:(?P<avg>[\d.]+|inf)\s+min:(?P<min>[\d.]+|inf)\s+max:(?P<max>[\d.]+|inf)")
 
 
 @dataclass
@@ -58,7 +56,16 @@ def compare_quality(
 
     args = ["-i", export_path, "-i", source_path]
     if max_duration:
-        args = ["-i", export_path, "-t", str(max_duration), "-i", source_path, "-t", str(max_duration)]
+        args = [
+            "-i",
+            export_path,
+            "-t",
+            str(max_duration),
+            "-i",
+            source_path,
+            "-t",
+            str(max_duration),
+        ]
 
     scale_filter = f"scale={target[0]}:{target[1]}"
     filt = f"[0:v]{scale_filter}[a];[1:v]{scale_filter}[b];[a][b]ssim"

@@ -17,14 +17,16 @@ if TYPE_CHECKING:
     from ..batch import BatchJobResult
 
 
-def _duration_str(result: "BatchJobResult", lang: str) -> str:
+def _duration_str(result: BatchJobResult, lang: str) -> str:
     if result.duration is None:
         return i18n.t("unknown_duration", lang)
     return seconds_to_timestamp(result.duration)
 
 
 def build_batch_index_markdown(
-    results: list["BatchJobResult"], out_dir: Path, language: str = i18n.DEFAULT_LANGUAGE
+    results: list[BatchJobResult],
+    out_dir: Path,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> str:
     lang = language if language in i18n.SUPPORTED_LANGUAGES else i18n.DEFAULT_LANGUAGE
 
@@ -61,7 +63,9 @@ def build_batch_index_markdown(
 
 
 def write_batch_index_markdown(
-    results: list["BatchJobResult"], out_path: str | Path, language: str = i18n.DEFAULT_LANGUAGE
+    results: list[BatchJobResult],
+    out_path: str | Path,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -84,7 +88,9 @@ th { background: #f0f2f4; font-size: 12px; text-transform: uppercase; }
 
 
 def build_batch_index_html(
-    results: list["BatchJobResult"], out_dir: Path, language: str = i18n.DEFAULT_LANGUAGE
+    results: list[BatchJobResult],
+    out_dir: Path,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> str:
     lang = language if language in i18n.SUPPORTED_LANGUAGES else i18n.DEFAULT_LANGUAGE
 
@@ -100,7 +106,7 @@ def build_batch_index_html(
         else:
             status_html = (
                 f'<span class="status-error">{escape(i18n.t("status_error", lang))}: '
-                f'{escape(r.error or "")}</span>'
+                f"{escape(r.error or '')}</span>"
             )
             findings = high = medium = low = "-"
             report_link = "-"
@@ -146,7 +152,9 @@ def build_batch_index_html(
 
 
 def write_batch_index_html(
-    results: list["BatchJobResult"], out_path: str | Path, language: str = i18n.DEFAULT_LANGUAGE
+    results: list[BatchJobResult],
+    out_path: str | Path,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

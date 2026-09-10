@@ -52,12 +52,7 @@ def _run_astats_windowed(
     aformat = f"aformat=sample_rates={_SAMPLE_RATE}"
     if channel_layout:
         aformat += f":channel_layouts={channel_layout}"
-    filt = (
-        f"{aformat},"
-        f"asetnsamples=n={n_samples},"
-        f"astats=metadata=1:reset=1,"
-        f"ametadata=print:file=-"
-    )
+    filt = f"{aformat},asetnsamples=n={n_samples},astats=metadata=1:reset=1,ametadata=print:file=-"
     args = ["-i", source, "-af", filt, "-f", "null", "-"]
     proc = run_ffmpeg(args, timeout=timeout)
 
