@@ -29,6 +29,22 @@ def test_brief_unexpected_slide_detector_finds_short_appearance(
     assert events[0].duration < 1.2
 
 
+def test_slide_rollback_pattern_detector_is_symmetric_in_which_state_comes_first(
+    title_slide_missed_clip,
+):
+    """Regression test for the more common real-world variant of the core
+    use case: a camera cutaway hides the presenter advancing past the title
+    slide, so the recording's slide feed comes on already showing the next
+    slide (B), then briefly rolls back to the title (A) before returning to
+    B -- i.e. `B -> A -> B`, not the spec's literal `A -> B -> A(-> B)`. The
+    detector only checks for a revisited state_id (see slide_detectors.py),
+    so it should catch this regardless of which state appears first."""
+    ctx = AnalysisContext(title_slide_missed_clip)
+    events = SlideRollbackPatternDetector().run(ctx)
+    assert len(events) == 1
+    assert events[0].type == "slide_rollback_pattern"
+
+
 def test_presentation_detectors_skip_on_non_slide_footage(continuously_changing_clip):
     """Regression test for a real false-positive flood found running against
     an actual (non-slide) video clip: content that changes on every sampled

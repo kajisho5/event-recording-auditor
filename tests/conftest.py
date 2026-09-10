@@ -52,6 +52,11 @@ def premature_slide_advance_clip(fixtures_dir) -> str:
 
 
 @pytest.fixture(scope="session")
+def title_slide_missed_clip(fixtures_dir) -> str:
+    return str(fixtures_dir / "title_slide_missed.mp4")
+
+
+@pytest.fixture(scope="session")
 def quiet_static_clip(fixtures_dir) -> str:
     return str(fixtures_dir / "quiet_static.mp4")
 
