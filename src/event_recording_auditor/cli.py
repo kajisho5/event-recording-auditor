@@ -13,9 +13,16 @@ import json
 import sys
 from pathlib import Path
 
+from .batch import run_batch
 from .pipeline import PROFILES, run_pipeline
 from .postproduction import compare_source_and_export
-from .reporting import write_html_report, write_json_report, write_markdown_report
+from .reporting import (
+    write_batch_index_html,
+    write_batch_index_markdown,
+    write_html_report,
+    write_json_report,
+    write_markdown_report,
+)
 from .reporting.i18n import SUPPORTED_LANGUAGES
 
 
@@ -64,6 +71,35 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     for limitation in result.limitations:
         print(f"  Note: {limitation}")
     return 0
+
+
+def cmd_batch(args: argparse.Namespace) -> int:
+    results = run_batch(
+        args.sources,
+        out_dir=args.out_dir,
+        profile=args.profile,
+        include_feedback_experimental=args.experimental_feedback,
+        no_evidence=args.no_evidence,
+        min_severity_for_evidence=args.min_severity_for_evidence,
+        lang=args.lang,
+        concurrency=args.concurrency,
+    )
+
+    out_dir = Path(args.out_dir)
+    index_md = write_batch_index_markdown(results, out_dir / "index.md", language=args.lang)
+    index_html = write_batch_index_html(results, out_dir / "index.html", language=args.lang)
+
+    ok_count = sum(1 for r in results if r.ok)
+    error_count = len(results) - ok_count
+    print(f"Processed {len(results)} file(s): {ok_count} ok, {error_count} error(s)")
+    for r in results:
+        if r.ok:
+            print(f"  [ok]    {r.source} -> {r.total_findings} finding(s) ({out_dir / r.slug})")
+        else:
+            print(f"  [error] {r.source}: {r.error}")
+    print(f"Index: {index_md}")
+    print(f"Index: {index_html}")
+    return 1 if error_count and error_count == len(results) else 0
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
@@ -126,6 +162,52 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     analyze.set_defaults(func=cmd_analyze)
+
+    batch = subparsers.add_parser(
+        "batch",
+        help="Audit several independent recordings concurrently (e.g. one file per venue).",
+    )
+    batch.add_argument("sources", nargs="+", help="Paths to the recordings to analyze.")
+    batch.add_argument(
+        "--out-dir",
+        default="batch-audit",
+        help="Directory for the batch index and per-file subdirectories (default: batch-audit).",
+    )
+    batch.add_argument(
+        "--profile",
+        choices=["full", *PROFILES.keys()],
+        default="full",
+        help="Which detector set to run for every file (default: full).",
+    )
+    batch.add_argument(
+        "--experimental-feedback",
+        action="store_true",
+        help="Also run the experimental feedback/howling detector (requires numpy).",
+    )
+    batch.add_argument("--no-evidence", action="store_true", help="Skip evidence extraction.")
+    batch.add_argument(
+        "--min-severity-for-evidence",
+        choices=["low", "medium", "high"],
+        default="medium",
+        help="Minimum severity to extract an evidence package for (default: medium).",
+    )
+    batch.add_argument(
+        "--lang",
+        choices=list(SUPPORTED_LANGUAGES),
+        default="en",
+        help="Language for report prose, same as `analyze --lang` (default: en).",
+    )
+    batch.add_argument(
+        "--concurrency",
+        type=int,
+        default=None,
+        help=(
+            "Max files to process at once (default: min(file count, CPU count) -- "
+            "each job is CPU-bound on ffmpeg decode, so more than the CPU count just "
+            "adds contention)."
+        ),
+    )
+    batch.set_defaults(func=cmd_batch)
 
     compare = subparsers.add_parser(
         "compare", help="Compare a source recording against an edited/exported file."

@@ -92,6 +92,29 @@ hand when the user wants something to paste elsewhere.
 - If zero anomalies were found, say so plainly -- do not manufacture a
   finding to seem thorough.
 
+### Multiple independent recordings (e.g. a multi-venue event day)
+
+When the user has more than one recording to audit from the same
+request (several venues, several sessions) and the files are genuinely
+independent (not parts of one continuous recording), use `batch` instead
+of calling `analyze` once per file:
+
+```bash
+event-recording-auditor batch venue1.mp4 venue2.mp4 venue3.mp4 \
+  --out-dir day-audit --concurrency 4
+```
+
+This runs the files concurrently (one OS process each, up to the CPU
+count by default) rather than one at a time, and writes a top-level
+`day-audit/index.md`/`index.html` alongside each venue's own report
+subdirectory -- point the user at the index first, then drill into a
+specific venue's report if they ask about it. Do NOT use `batch` on
+pieces of a *single* continuous recording (e.g. an intentionally
+chunked-up file) -- the detectors' context windows (freeze/blackout
+segments, audio-dropout before/after activity, progression-interruption
+buckets, slide-state revisits) assume a continuous timeline, and treating
+chunks as independent files will miss or duplicate findings at the seams.
+
 ## Post-production / quality-complaint workflow
 
 ```bash

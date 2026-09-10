@@ -100,6 +100,49 @@ Explicitly **not** added, and why:
   build, which is not guaranteed to be present. SSIM/PSNR (built into
   stock ffmpeg) are used instead for the post-production comparison mode.
 
+## Batch processing
+
+`batch.py` (CLI: `event-recording-auditor batch FILE1 FILE2 ...`) runs the
+single-file pipeline over multiple independent recordings concurrently,
+using `concurrent.futures.ProcessPoolExecutor` -- one OS process per file,
+up to `min(file count, CPU count)` at once by default.
+
+**Why cross-file parallelism and not within-file chunking.** Splitting
+one long recording into time chunks and analyzing them in parallel would
+also cut wall-clock time, but every detector that looks at a *run* of
+states across a boundary -- `FreezeDetector`/`BlackoutDetector` segments,
+`AudioDropoutDetector`'s before/after context windows,
+`ProgressionInterruptionDetector`'s bucketed runs, the slide-state
+timeline's revisit matching -- would need explicit handling for a chunk
+seam falling in the middle of one of those, or it silently loses or
+duplicates a finding that spans the seam. For a genuinely multi-venue
+event day, the recordings are already separate files with no shared
+state, so process-per-file sidesteps that whole problem class for free.
+If a single very long recording ever needs to be sped up the same way,
+chunking would have to be designed deliberately (overlapping chunk
+boundaries, merging logic for findings that span a seam) rather than
+reusing this mechanism as-is.
+
+**Where the concurrency default comes from.** Each job is CPU-bound on
+ffmpeg decode (the pipeline's own passes, not batch-level I/O), so running
+more workers than CPU cores adds contention rather than throughput;
+`min(file count, CPU count)` is a reasonable default, overridable via
+`--concurrency`. Measured throughput on real (non-synthetic) recordings
+after the false-positive fixes in `detectors/slide_detectors.py` landed:
+~0.10-0.18 seconds of processing per second of source video for the
+`full` profile on a small (57s-195s) sample, i.e. roughly 5-10x
+real-time single-threaded. This is a small-sample measurement, not a
+guarantee -- content mix (how many findings trigger evidence extraction,
+how much slide-like content there is) affects it, and it has not been
+measured against an hours-long recording.
+
+**Failure isolation.** `_run_one_job` (the function that runs inside each
+worker process) never lets an exception cross the process boundary as a
+crash -- a corrupt file, a missing path, or a detector bug in one file's
+job is recorded as `BatchJobResult(ok=False, error=...)` and shown as a
+per-venue error row in the batch index, and every other file's job still
+completes normally.
+
 ## Localization
 
 `report.html` and `report.md` accept a `language` parameter (`--lang` on

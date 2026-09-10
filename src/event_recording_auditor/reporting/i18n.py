@@ -63,6 +63,16 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
     "none": {"en": "(none)", "ja": "(なし)"},
     "unknown_file": {"en": "(unknown file)", "ja": "(不明なファイル)"},
     "unknown_duration": {"en": "unknown", "ja": "不明"},
+    "batch_title": {
+        "en": "Event Recording Audit — Batch Summary",
+        "ja": "収録監査レポート — 複数会場サマリー",
+    },
+    "col_venue": {"en": "Venue / File", "ja": "会場 / ファイル"},
+    "col_status": {"en": "Status", "ja": "ステータス"},
+    "col_report": {"en": "Report", "ja": "レポート"},
+    "status_ok": {"en": "ok", "ja": "正常"},
+    "status_error": {"en": "error", "ja": "エラー"},
+    "total_venues": {"en": "Venues processed", "ja": "処理した会場数"},
 }
 
 _SEVERITY = {

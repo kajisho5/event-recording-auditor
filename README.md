@@ -63,6 +63,26 @@ original source file against an exported/edited delivery file:
 event-recording-auditor compare SOURCE.mp4 EXPORT.mp4 --out-dir audit-output
 ```
 
+Audit several independent recordings at once (e.g. one file per venue for
+a multi-venue event day) with the same options as `analyze`, run
+concurrently:
+
+```bash
+event-recording-auditor batch venue1.mp4 venue2.mp4 venue3.mp4 \
+  --out-dir day-audit --concurrency 4
+```
+
+Writes `day-audit/<venue>/report.{json,html,md}` per file plus a top-level
+`day-audit/index.{md,html}` summarizing every venue's finding counts with
+links into each one's report. `--concurrency` defaults to
+`min(file count, CPU count)` -- each file is processed in its own worker
+process, since the files are fully independent (this is cross-file
+parallelism, not splitting one long recording into chunks; see
+`docs/architecture.md`, "Batch processing", for why that distinction
+matters). A file that fails to analyze (unreadable, corrupt) is recorded
+as an error for that one venue in the index rather than aborting the rest
+of the batch.
+
 See [`SKILL.md`](SKILL.md) for the full Agent-facing workflow, including
 when to ask for additional reference data (expected slide order, switching
 plan, delivery spec) and how to phrase findings responsibly.
