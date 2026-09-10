@@ -15,6 +15,14 @@ from ..timeline import Category, Confidence, Event, Severity
 from .base import Detector
 from .context import AnalysisContext
 
+# Below this fraction of "time spent in a stable state", the recording
+# does not look like a slide/presentation feed at all (ordinary video
+# changes on essentially every sampled frame) -- both detectors below
+# skip rather than flood the report. Calibrated against real footage: a
+# synthetic slide deck scores ~0.94, an unrelated broadcast video clip
+# scored ~0.05. See docs/false-positives.md.
+MIN_SLIDE_STABILITY_RATIO = 0.35
+
 
 class SlideRollbackPatternDetector(Detector):
     """Detects A -> B -> A (-> B) revisit patterns in the slide timeline."""
@@ -23,12 +31,27 @@ class SlideRollbackPatternDetector(Detector):
     tier = 2
     requires = "video"
 
-    def __init__(self, brief_duration_threshold: float = 2.0) -> None:
+    def __init__(
+        self,
+        brief_duration_threshold: float = 2.0,
+        min_stability_ratio: float = MIN_SLIDE_STABILITY_RATIO,
+    ) -> None:
         self.brief_duration_threshold = brief_duration_threshold
+        self.min_stability_ratio = min_stability_ratio
+        self.skipped_reason: str | None = None
 
     def run(self, ctx: AnalysisContext) -> list[Event]:
         states = ctx.slide_states()
         if len(states) < 3:
+            return []
+
+        ratio = ctx.slide_stability_ratio()
+        if ratio is not None and ratio < self.min_stability_ratio:
+            self.skipped_reason = (
+                f"content does not look slide-like (stability ratio {ratio:.2f} < "
+                f"{self.min_stability_ratio}); this detector assumes long-held slide "
+                "states and would otherwise flood the report on ordinary video."
+            )
             return []
 
         events = []
@@ -122,12 +145,27 @@ class BriefUnexpectedSlideDetector(Detector):
     tier = 2
     requires = "video"
 
-    def __init__(self, brief_duration_threshold: float = 1.2) -> None:
+    def __init__(
+        self,
+        brief_duration_threshold: float = 1.2,
+        min_stability_ratio: float = MIN_SLIDE_STABILITY_RATIO,
+    ) -> None:
         self.brief_duration_threshold = brief_duration_threshold
+        self.min_stability_ratio = min_stability_ratio
+        self.skipped_reason: str | None = None
 
     def run(self, ctx: AnalysisContext) -> list[Event]:
         states = ctx.slide_states()
         if len(states) < 2:
+            return []
+
+        ratio = ctx.slide_stability_ratio()
+        if ratio is not None and ratio < self.min_stability_ratio:
+            self.skipped_reason = (
+                f"content does not look slide-like (stability ratio {ratio:.2f} < "
+                f"{self.min_stability_ratio}); this detector assumes long-held slide "
+                "states and would otherwise flood the report on ordinary video."
+            )
             return []
 
         events = []

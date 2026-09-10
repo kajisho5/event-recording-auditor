@@ -107,3 +107,25 @@ class AnalysisContext:
                 segments, match_threshold=match_threshold
             )
         return self._slide_states
+
+    def slide_stability_ratio(self, min_stable_duration: float = 2.0) -> float | None:
+        """Fraction of the analyzed duration spent in a "stable" slide state.
+
+        A real slide/presentation recording spends most of its time on one
+        slide at a stretch; continuously-changing footage (ordinary camera
+        work, broadcast content, a scene-cut-heavy edit) does not, even
+        though the same frame-hash clustering machinery still produces a
+        `slide_states()` sequence for it. This ratio is how presentation
+        detectors tell those two situations apart -- see
+        docs/false-positives.md, "Flagging non-presentation footage as
+        slide anomalies", which was added after exactly this failure mode
+        showed up running on ordinary (non-slide) video.
+
+        Returns None if there is no video to judge (empty state list).
+        """
+        states = self.slide_states()
+        total = sum(s.duration for s in states)
+        if total <= 0:
+            return None
+        stable = sum(s.duration for s in states if s.duration >= min_stable_duration)
+        return stable / total

@@ -123,6 +123,19 @@ def make_premature_slide_advance_clip(out_path: Path) -> Path:
     return out_path
 
 
+def make_continuously_changing_clip(out_path: Path, duration: float = 5.0) -> Path:
+    """Video that changes every frame, standing in for "ordinary" (non-slide)
+    footage such as camera work or broadcast content -- used to check that
+    presentation detectors don't flood a report on non-slide input. Real
+    validation for this came from testing against an actual TV clip, which
+    is not something this repo can commit as a fixture."""
+    _run(
+        "-f", "lavfi", "-i", f"mandelbrot=size=320x240:rate=4",
+        "-t", str(duration), str(out_path),
+    )
+    return out_path
+
+
 def make_quiet_static_clip(out_path: Path, duration: float = 40.0) -> Path:
     """A long static, silent clip: a progression-interruption candidate."""
     _run(
@@ -146,6 +159,9 @@ def generate_all(out_dir: Path) -> dict[str, Path]:
             out_dir / "premature_slide_advance.mp4"
         ),
         "quiet_static": make_quiet_static_clip(out_dir / "quiet_static.mp4"),
+        "continuously_changing": make_continuously_changing_clip(
+            out_dir / "continuously_changing.mp4"
+        ),
     }
 
 

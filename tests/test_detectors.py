@@ -25,6 +25,21 @@ def test_brief_unexpected_slide_detector_finds_short_appearance(premature_slide_
     assert events[0].duration < 1.2
 
 
+def test_presentation_detectors_skip_on_non_slide_footage(continuously_changing_clip):
+    """Regression test for a real false-positive flood found running against
+    an actual (non-slide) video clip: content that changes on every sampled
+    frame used to produce one brief_unexpected_slide finding per sample."""
+    ctx = AnalysisContext(continuously_changing_clip)
+
+    rollback = SlideRollbackPatternDetector()
+    assert rollback.run(ctx) == []
+    assert rollback.skipped_reason is not None
+
+    brief = BriefUnexpectedSlideDetector()
+    assert brief.run(ctx) == []
+    assert brief.skipped_reason is not None
+
+
 def test_blackout_detector_emits_high_severity_for_long_black(blackout_clip):
     ctx = AnalysisContext(blackout_clip)
     events = BlackoutDetector(min_duration=0.1, high_severity_duration=0.8).run(ctx)

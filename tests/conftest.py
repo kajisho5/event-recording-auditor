@@ -57,6 +57,11 @@ def quiet_static_clip(fixtures_dir) -> str:
 
 
 @pytest.fixture(scope="session")
+def continuously_changing_clip(fixtures_dir) -> str:
+    return str(fixtures_dir / "continuously_changing.mp4")
+
+
+@pytest.fixture(scope="session")
 def channel_dropout_audio(fixtures_dir) -> str:
     return str(fixtures_dir / "channel_dropout.wav")
 
