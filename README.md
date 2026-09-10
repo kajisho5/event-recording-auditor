@@ -123,6 +123,21 @@ Tests generate their own small synthetic media fixtures via
 [`examples/generate_synthetic_fixtures.py`](examples/generate_synthetic_fixtures.py)
 (ffmpeg `lavfi` sources) rather than committing binary test media.
 
+### Releasing a version
+
+Push a tag matching `v*`:
+
+```bash
+git tag v0.1.0-beta
+git push origin v0.1.0-beta
+```
+
+`.github/workflows/release.yml` picks it up and creates the GitHub
+Release automatically, with release notes generated from the commits/PRs
+merged since the previous tag -- no need to hand-write them. A tag with a
+hyphen (e.g. `v0.1.0-beta`, per semver's pre-release convention) is
+published as a pre-release; a plain `vX.Y.Z` tag is a normal release.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) -- pipeline, module map, dependency rationale.
