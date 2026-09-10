@@ -1,5 +1,16 @@
 # Event Recording Auditor
 
+> **Beta.** Runs fully locally (no network calls -- see "Requirements"
+> below; the only hard dependency is the `ffmpeg`/`ffprobe` binaries).
+> What's been validated so far: false-positive behavior against a small
+> number of real (non-synthetic) recordings, which surfaced and fixed two
+> real bugs (see `docs/false-positives.md`). What has **not** been
+> validated: detection rate/recall -- whether this actually catches real
+> production incidents -- has only been exercised against synthetic test
+> fixtures with known-injected anomalies, never against real footage with
+> a known, confirmed problem. Treat every finding as a candidate for human
+> review, not a confirmed issue, per the design principle below.
+
 Deterministic, evidence-first analysis of recorded event footage
 (conferences, seminars, webinars, lectures, hybrid events). It analyzes a
 recording as a timeline of production signals -- video, audio,
