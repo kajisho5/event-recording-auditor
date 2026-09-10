@@ -136,6 +136,35 @@ def make_continuously_changing_clip(out_path: Path, duration: float = 5.0) -> Pa
     return out_path
 
 
+def make_portrait_cutaway_clip(out_path: Path) -> Path:
+    """Portrait video cutting back and forth between two static shots --
+    stands in for short-form/interview-style vertical video edited with a
+    small number of repeated camera angles. Visually this produces the same
+    kind of A -> B -> A revisit pattern as a slide rollback, which is why
+    presentation detectors must not run on non-landscape content -- see
+    docs/false-positives.md. Real validation for this came from an actual
+    portrait video clip, not something this repo can commit."""
+    tmp = out_path.parent
+    a = tmp / "_pa.mp4"
+    b = tmp / "_pb.mp4"
+    _run(
+        "-f", "lavfi", "-i", "color=c=blue:s=360x640:d=2:r=4,format=yuv420p",
+        "-vf", "drawbox=x=20:y=20:w=150:h=150:color=white@1.0:t=fill", str(a),
+    )
+    _run(
+        "-f", "lavfi", "-i", "color=c=blue:s=360x640:d=2:r=4,format=yuv420p",
+        "-vf", "drawbox=x=190:y=470:w=150:h=150:color=orange@1.0:t=fill", str(b),
+    )
+    _run(
+        "-i", str(a), "-i", str(b), "-i", str(a), "-i", str(b), "-i", str(a), "-i", str(b),
+        "-filter_complex", "[0:v][1:v][2:v][3:v][4:v][5:v]concat=n=6:v=1:a=0[v]",
+        "-map", "[v]", str(out_path),
+    )
+    a.unlink(missing_ok=True)
+    b.unlink(missing_ok=True)
+    return out_path
+
+
 def make_quiet_static_clip(out_path: Path, duration: float = 40.0) -> Path:
     """A long static, silent clip: a progression-interruption candidate."""
     _run(
@@ -162,6 +191,7 @@ def generate_all(out_dir: Path) -> dict[str, Path]:
         "continuously_changing": make_continuously_changing_clip(
             out_dir / "continuously_changing.mp4"
         ),
+        "portrait_cutaway": make_portrait_cutaway_clip(out_dir / "portrait_cutaway.mp4"),
     }
 
 

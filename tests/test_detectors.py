@@ -40,6 +40,20 @@ def test_presentation_detectors_skip_on_non_slide_footage(continuously_changing_
     assert brief.skipped_reason is not None
 
 
+def test_presentation_detectors_skip_on_portrait_video(portrait_cutaway_clip):
+    """Regression test for a second real false-positive class: a portrait
+    video cutting back and forth between two static shots produces the same
+    A -> B -> A revisit signature as a slide rollback (high stability ratio
+    included), so the stability-ratio gate alone doesn't catch it. Slide
+    decks/screen shares are landscape, so an aspect-ratio check does."""
+    ctx = AnalysisContext(portrait_cutaway_clip)
+    assert ctx.slide_stability_ratio() > 0.35  # would pass the other gate
+
+    rollback = SlideRollbackPatternDetector()
+    assert rollback.run(ctx) == []
+    assert "landscape" in rollback.skipped_reason
+
+
 def test_blackout_detector_emits_high_severity_for_long_black(blackout_clip):
     ctx = AnalysisContext(blackout_clip)
     events = BlackoutDetector(min_duration=0.1, high_severity_duration=0.8).run(ctx)

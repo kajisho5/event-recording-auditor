@@ -23,6 +23,36 @@ from .context import AnalysisContext
 # scored ~0.05. See docs/false-positives.md.
 MIN_SLIDE_STABILITY_RATIO = 0.35
 
+# Slide decks and screen shares are landscape (4:3, 16:9, ...); a square or
+# portrait video is essentially never one. Found necessary after the
+# stability-ratio check alone still passed a portrait short-form video
+# edited with a small number of repeated camera angles cut back and forth
+# -- visually indistinguishable from slide revisits by duration/stability
+# alone. See docs/false-positives.md.
+MIN_PRESENTATION_ASPECT_RATIO = 1.2
+
+
+def _non_presentation_reason(
+    ctx: AnalysisContext, min_stability_ratio: float
+) -> str | None:
+    """Return why `ctx` doesn't look like slide/presentation content, or
+    None if the presentation detectors' assumptions plausibly hold."""
+    aspect = ctx.aspect_ratio()
+    if aspect is not None and aspect < MIN_PRESENTATION_ASPECT_RATIO:
+        return (
+            f"content is not landscape (aspect ratio {aspect:.2f} < "
+            f"{MIN_PRESENTATION_ASPECT_RATIO}); slide decks and screen shares are "
+            "virtually always landscape, so this is very unlikely to be one."
+        )
+    ratio = ctx.slide_stability_ratio()
+    if ratio is not None and ratio < min_stability_ratio:
+        return (
+            f"content does not look slide-like (stability ratio {ratio:.2f} < "
+            f"{min_stability_ratio}); this detector assumes long-held slide states "
+            "and would otherwise flood the report on ordinary video."
+        )
+    return None
+
 
 class SlideRollbackPatternDetector(Detector):
     """Detects A -> B -> A (-> B) revisit patterns in the slide timeline."""
@@ -45,13 +75,9 @@ class SlideRollbackPatternDetector(Detector):
         if len(states) < 3:
             return []
 
-        ratio = ctx.slide_stability_ratio()
-        if ratio is not None and ratio < self.min_stability_ratio:
-            self.skipped_reason = (
-                f"content does not look slide-like (stability ratio {ratio:.2f} < "
-                f"{self.min_stability_ratio}); this detector assumes long-held slide "
-                "states and would otherwise flood the report on ordinary video."
-            )
+        reason = _non_presentation_reason(ctx, self.min_stability_ratio)
+        if reason:
+            self.skipped_reason = reason
             return []
 
         events = []
@@ -159,13 +185,9 @@ class BriefUnexpectedSlideDetector(Detector):
         if len(states) < 2:
             return []
 
-        ratio = ctx.slide_stability_ratio()
-        if ratio is not None and ratio < self.min_stability_ratio:
-            self.skipped_reason = (
-                f"content does not look slide-like (stability ratio {ratio:.2f} < "
-                f"{self.min_stability_ratio}); this detector assumes long-held slide "
-                "states and would otherwise flood the report on ordinary video."
-            )
+        reason = _non_presentation_reason(ctx, self.min_stability_ratio)
+        if reason:
+            self.skipped_reason = reason
             return []
 
         events = []

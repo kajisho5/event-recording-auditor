@@ -62,6 +62,11 @@ def continuously_changing_clip(fixtures_dir) -> str:
 
 
 @pytest.fixture(scope="session")
+def portrait_cutaway_clip(fixtures_dir) -> str:
+    return str(fixtures_dir / "portrait_cutaway.mp4")
+
+
+@pytest.fixture(scope="session")
 def channel_dropout_audio(fixtures_dir) -> str:
     return str(fixtures_dir / "channel_dropout.wav")
 

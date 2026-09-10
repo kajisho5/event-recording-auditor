@@ -129,3 +129,9 @@ class AnalysisContext:
             return None
         stable = sum(s.duration for s in states if s.duration >= min_stable_duration)
         return stable / total
+
+    def aspect_ratio(self) -> float | None:
+        res = self.media_info.resolution
+        if not res or res[1] == 0:
+            return None
+        return res[0] / res[1]
