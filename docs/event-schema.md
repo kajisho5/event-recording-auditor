@@ -22,6 +22,7 @@ This is the single schema all reports (`report.json`, `report.html`,
   ],
   "measurements": {
     "sequence": [1, 2, 1, 2],
+    "sequence_durations": [3.0, 0.5, 2.0, 3.0],
     "first_intervening_duration": 0.5,
     "confirmed_repeat": true
   },

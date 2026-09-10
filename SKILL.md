@@ -68,6 +68,9 @@ python -m event_recording_auditor.cli analyze RECORDING.mp4 \
 - `--no-evidence` skips frame/clip extraction if the user only wants a
   quick pass; otherwise evidence packages (frames + a short clip per
   finding) are written to `audit-output/evidence/`.
+- `--lang ja` renders `report.html`/`report.md` in Japanese instead of the
+  default English (match the language the user is asking in). `report.json`
+  stays English regardless -- it's the stable machine-readable format.
 
 Read `audit-output/report.json` for the structured findings and summarize
 for the user. Point to `audit-output/report.html` as the human-reviewable

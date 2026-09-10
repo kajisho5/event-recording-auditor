@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from ..timeline import Event, Timeline
+from . import i18n
 from .timestamps import seconds_to_timestamp as _seconds_to_timestamp
 
 _SEVERITY_COLOR = {
@@ -60,12 +61,12 @@ def _relative_path(target: str, report_dir: Path) -> str | None:
         return None
 
 
-def _render_summary_cards(summary: dict[str, Any]) -> str:
+def _render_summary_cards(summary: dict[str, Any], lang: str) -> str:
     cards = [
-        ("Total findings", summary["total_events"]),
-        ("High", summary["by_severity"]["high"]),
-        ("Medium", summary["by_severity"]["medium"]),
-        ("Low", summary["by_severity"]["low"]),
+        (i18n.t("total_findings", lang), summary["total_events"]),
+        (i18n.severity_label("high", lang), summary["by_severity"]["high"]),
+        (i18n.severity_label("medium", lang), summary["by_severity"]["medium"]),
+        (i18n.severity_label("low", lang), summary["by_severity"]["low"]),
     ]
     parts = []
     for label, value in cards:
@@ -76,28 +77,30 @@ def _render_summary_cards(summary: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-def _render_timeline_rows(events: list[Event]) -> str:
+def _render_timeline_rows(events: list[Event], lang: str) -> str:
     rows = []
     for e in events:
         color = _SEVERITY_COLOR.get(e.severity.value, "#6b7280")
         rows.append(
             "<tr>"
             f'<td>{escape(_seconds_to_timestamp(e.start))}</td>'
-            f'<td>{escape(e.category.value)}</td>'
-            f'<td><span class="badge" style="background:{color}">{escape(e.severity.value)}</span></td>'
-            f'<td>{escape(e.confidence.value)}</td>'
+            f'<td>{escape(i18n.category_label(e.category.value, lang))}</td>'
+            f'<td><span class="badge" style="background:{color}">'
+            f'{escape(i18n.severity_label(e.severity.value, lang))}</span></td>'
+            f'<td>{escape(i18n.confidence_label(e.confidence.value, lang))}</td>'
             f'<td>{escape(e.type)}</td>'
-            f'<td><a href="#finding-{escape(e.id)}">details</a></td>'
+            f'<td><a href="#finding-{escape(e.id)}">{escape(i18n.t("details", lang))}</a></td>'
             "</tr>"
         )
     return "\n".join(rows)
 
 
-def _render_finding(e: Event, report_dir: Path) -> str:
+def _render_finding(e: Event, report_dir: Path, lang: str) -> str:
     color = _SEVERITY_COLOR.get(e.severity.value, "#6b7280")
-    obs_html = "".join(f"<li>{escape(o)}</li>" for o in e.observations)
+    observations, interpretation = i18n.translate_event_text(e, lang)
+    obs_html = "".join(f"<li>{escape(o)}</li>" for o in observations)
     review = (
-        '<div class="review-required">Human verification required.</div>'
+        f'<div class="review-required">{escape(i18n.t("human_verification_required", lang))}</div>'
         if e.requires_human_review
         else ""
     )
@@ -112,17 +115,18 @@ def _render_finding(e: Event, report_dir: Path) -> str:
         f'<div class="evidence">{"".join(evidence_links)}</div>' if evidence_links else ""
     )
 
-    interpretation = e.possible_interpretation or "(insufficient evidence for an interpretation)"
+    interpretation = interpretation or i18n.t("no_interpretation", lang)
 
     return f"""
 <div class="finding" id="finding-{escape(e.id)}">
   <h3>{escape(_seconds_to_timestamp(e.start))} &ndash; {escape(_seconds_to_timestamp(e.end))}
-      <span class="badge" style="background:{color}">{escape(e.severity.value)}</span></h3>
-  <div class="meta">{escape(e.category.value)} / {escape(e.type)} &middot;
-      confidence: {escape(e.confidence.value)} &middot; detector: {escape(e.detector)}</div>
-  <strong>Observed:</strong>
+      <span class="badge" style="background:{color}">{escape(i18n.severity_label(e.severity.value, lang))}</span></h3>
+  <div class="meta">{escape(i18n.category_label(e.category.value, lang))} / {escape(e.type)} &middot;
+      {escape(i18n.t("col_confidence", lang))}: {escape(i18n.confidence_label(e.confidence.value, lang))} &middot;
+      {escape(i18n.t("detector", lang))}: {escape(e.detector)}</div>
+  <strong>{escape(i18n.t("observed", lang))}:</strong>
   <ul>{obs_html}</ul>
-  <div class="interpretation">Possible interpretation: {escape(interpretation)}</div>
+  <div class="interpretation">{escape(i18n.t("possible_interpretation", lang))}: {escape(interpretation)}</div>
   {review}
   {evidence_html}
 </div>
@@ -134,46 +138,58 @@ def build_report_html(
     media_summary: dict[str, Any],
     report_dir: Path,
     limitations: list[str] | None = None,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> str:
+    lang = language if language in i18n.SUPPORTED_LANGUAGES else i18n.DEFAULT_LANGUAGE
     events = timeline.events
     summary = timeline.summary()
 
-    title = escape(media_summary.get("path", "Event Recording Audit"))
+    title = escape(media_summary.get("path", i18n.t("unknown_file", lang)))
     duration = media_summary.get("duration")
-    duration_str = _seconds_to_timestamp(duration) if duration else "unknown"
+    duration_str = _seconds_to_timestamp(duration) if duration else i18n.t("unknown_duration", lang)
 
     limitations_html = ""
     if limitations:
         items = "".join(f"<li>{escape(item)}</li>" for item in limitations)
-        limitations_html = f'<div class="limitations"><strong>Limitations</strong><ul>{items}</ul></div>'
+        limitations_html = (
+            f'<div class="limitations"><strong>{escape(i18n.t("limitations", lang))}</strong>'
+            f"<ul>{items}</ul></div>"
+        )
 
-    findings_html = "".join(_render_finding(e, report_dir) for e in events)
+    findings_html = "".join(_render_finding(e, report_dir, lang) for e in events)
 
     return f"""<!doctype html>
-<html lang="en">
+<html lang="{lang}">
 <head>
 <meta charset="utf-8">
-<title>Event Recording Audit</title>
+<title>{escape(i18n.t("title", lang))}</title>
 <style>{_CSS}</style>
 </head>
 <body>
-  <h1>Event Recording Audit</h1>
-  <div class="subtitle">{title} &middot; duration {duration_str}</div>
+  <h1>{escape(i18n.t("title", lang))}</h1>
+  <div class="subtitle">{title} &middot; {escape(i18n.t("duration", lang))} {duration_str}</div>
 
   <div class="summary">
-    {_render_summary_cards(summary)}
+    {_render_summary_cards(summary, lang)}
   </div>
 
-  <h2>Timeline</h2>
+  <h2>{escape(i18n.t("timeline", lang))}</h2>
   <table class="timeline">
-    <thead><tr><th>Time</th><th>Category</th><th>Severity</th><th>Confidence</th><th>Type</th><th></th></tr></thead>
+    <thead><tr>
+      <th>{escape(i18n.t("col_time", lang))}</th>
+      <th>{escape(i18n.t("col_category", lang))}</th>
+      <th>{escape(i18n.t("col_severity", lang))}</th>
+      <th>{escape(i18n.t("col_confidence", lang))}</th>
+      <th>{escape(i18n.t("col_type", lang))}</th>
+      <th></th>
+    </tr></thead>
     <tbody>
-      {_render_timeline_rows(events)}
+      {_render_timeline_rows(events, lang)}
     </tbody>
   </table>
 
-  <h2>Detailed findings</h2>
-  {findings_html or "<p>No anomaly candidates were detected.</p>"}
+  <h2>{escape(i18n.t("detailed_findings", lang))}</h2>
+  {findings_html or f"<p>{escape(i18n.t('no_findings', lang))}</p>"}
 
   {limitations_html}
 </body>
@@ -186,9 +202,10 @@ def write_html_report(
     media_summary: dict[str, Any],
     out_path: str | Path,
     limitations: list[str] | None = None,
+    language: str = i18n.DEFAULT_LANGUAGE,
 ) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    html = build_report_html(timeline, media_summary, out_path.parent, limitations)
+    html = build_report_html(timeline, media_summary, out_path.parent, limitations, language)
     out_path.write_text(html)
     return out_path

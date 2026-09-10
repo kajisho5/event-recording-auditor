@@ -46,6 +46,16 @@ ticket), and (unless
 `--no-evidence` is passed) `audit-output/evidence/incident-NNNN/` packages
 for each significant finding.
 
+Add `--lang ja` to get `report.html`/`report.md` in Japanese (English is
+the default, and the only option today besides Japanese). `report.json`
+is always English -- it's the stable machine-readable format. Only the
+report's prose (structural labels, and each finding's observations/
+interpretation) is translated; the technical `type` identifier (e.g.
+`slide_rollback_pattern`) is never translated, since it's a stable
+identifier documented in `docs/detection-model.md`. The free-text
+`limitations` notes (e.g. "Detector 'clipping' skipped: ...") are also
+not yet translated -- see `docs/architecture.md`, "Localization".
+
 Investigate a "the edited footage looks worse" complaint by comparing an
 original source file against an exported/edited delivery file:
 

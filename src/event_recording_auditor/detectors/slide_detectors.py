@@ -100,8 +100,10 @@ class SlideRollbackPatternDetector(Detector):
         first_b_brief = b.duration < self.brief_duration_threshold
 
         sequence_ids = [a.state_id, b.state_id, a2.state_id]
+        sequence_durations = [a.duration, b.duration, a2.duration]
         if has_repeat:
             sequence_ids.append(states[i + 3].state_id)
+            sequence_durations.append(states[i + 3].duration)
 
         observations = [
             f"Slide state {a.state_id} was displayed for {a.duration:.2f}s.",
@@ -149,6 +151,7 @@ class SlideRollbackPatternDetector(Detector):
             observations=observations,
             measurements={
                 "sequence": sequence_ids,
+                "sequence_durations": sequence_durations,
                 "first_intervening_duration": b.duration,
                 "confirmed_repeat": has_repeat,
             },

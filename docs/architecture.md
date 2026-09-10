@@ -100,6 +100,39 @@ Explicitly **not** added, and why:
   build, which is not guaranteed to be present. SSIM/PSNR (built into
   stock ffmpeg) are used instead for the post-production comparison mode.
 
+## Localization
+
+`report.html` and `report.md` accept a `language` parameter (`--lang` on
+the CLI; `en` default, `ja` also supported today) via
+`reporting/i18n.py`. Two things are deliberately in scope and one is out:
+
+- **In scope**: structural labels (headers, table columns, severity/
+  confidence/category words) and each finding's `observations`/
+  `possible_interpretation` prose. The Japanese versions of the latter are
+  hand-written per detector `type` (`i18n._JA_RENDERERS`), reconstructed
+  from the same `Event.measurements` data the English text uses -- not a
+  runtime machine translation of the English string -- so both languages
+  carry the same information, verified in `tests/test_i18n.py` and
+  `tests/test_pipeline.py`.
+- **Deliberately not translated**: `Event.type` (e.g.
+  `slide_rollback_pattern`) is a stable technical identifier documented in
+  docs/detection-model.md; giving it per-language names would break that
+  cross-reference. `report.json` is entirely untranslated for the same
+  reason -- it's the stable machine-readable format (spec section 17).
+- **Not yet translated**: the pipeline's free-text `limitations` entries
+  (e.g. "Detector 'clipping' skipped: input has no audio stream.") are
+  generated directly by `pipeline.py` in English and passed through
+  as-is. Localizing these would mean turning them into structured
+  (key, params) messages the same way detector observations are handled;
+  not done yet because no detector-observation translation existed to
+  extend when the limitations mechanism was written.
+
+Adding a third language means: add its code to
+`i18n.SUPPORTED_LANGUAGES`, add a column to every entry in `i18n._UI_STRINGS`
+/`_SEVERITY`/`_CONFIDENCE`/`_CATEGORY`, and add a `_<lang>_<type>` renderer
+per detector type (a missing renderer falls back to English rather than
+raising, so partial coverage degrades gracefully).
+
 ## Non-goals (spec section 19: no hallucinated capabilities)
 
 This project does not and cannot:

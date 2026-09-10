@@ -16,6 +16,7 @@ from pathlib import Path
 from .pipeline import PROFILES, run_pipeline
 from .postproduction import compare_source_and_export
 from .reporting import write_html_report, write_json_report, write_markdown_report
+from .reporting.i18n import SUPPORTED_LANGUAGES
 
 
 def _media_summary(ctx) -> dict:
@@ -47,10 +48,12 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         result.timeline, media_summary, out_dir / "report.json", result.limitations
     )
     html_path = write_html_report(
-        result.timeline, media_summary, out_dir / "report.html", result.limitations
+        result.timeline, media_summary, out_dir / "report.html", result.limitations,
+        language=args.lang,
     )
     markdown_path = write_markdown_report(
-        result.timeline, media_summary, out_dir / "report.md", result.limitations
+        result.timeline, media_summary, out_dir / "report.md", result.limitations,
+        language=args.lang,
     )
 
     print(f"Analyzed {args.source}")
@@ -112,6 +115,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["low", "medium", "high"],
         default="medium",
         help="Minimum severity to extract an evidence package for (default: medium).",
+    )
+    analyze.add_argument(
+        "--lang",
+        choices=list(SUPPORTED_LANGUAGES),
+        default="en",
+        help=(
+            "Language for report.html/report.md prose (default: en). report.json is "
+            "always English -- it's the stable machine-readable format."
+        ),
     )
     analyze.set_defaults(func=cmd_analyze)
 
