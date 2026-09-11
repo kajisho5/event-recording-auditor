@@ -1,0 +1,62 @@
+# Used two ways:
+#  1. .github/workflows/pr-autolabel.yml runs this config's `autolabeler`
+#     on every PR (opened/reopened/synchronize) to apply fix/feature/major/
+#     chore labels from the PR's title and changed files.
+#  2. .github/workflows/release.yml runs release-drafter in dry-run mode
+#     (disable-releaser: true) to resolve the next version from those
+#     labels on PRs merged since the latest tag, via `version-resolver`
+#     below. version-template is deliberately plain MAJOR.MINOR.PATCH --
+#     this repo's tags can carry a "-beta" prerelease suffix that
+#     .github/scripts/resolve_version.py re-applies itself, not
+#     release-drafter's own version-resolver.
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+version-template: "$MAJOR.$MINOR.$PATCH"
+
+categories:
+  - title: "Breaking changes"
+    labels: ["major"]
+  - title: "Features"
+    labels: ["feature", "enhancement"]
+  - title: "Fixes"
+    labels: ["fix", "bug"]
+  - title: "Maintenance"
+    labels: ["chore", "dependencies", "github_actions"]
+
+change-template: "- $TITLE (#$NUMBER)"
+
+version-resolver:
+  major:
+    labels: ["major"]
+  minor:
+    labels: ["feature", "enhancement"]
+  patch:
+    labels: ["fix", "bug", "chore", "dependencies", "github_actions"]
+  default: patch
+
+# Matched against this repo's actual PR title convention: plain imperative
+# sentences (no conventional-commit prefixes), e.g. "Fix workflow_dispatch
+# on release.yml...", "Add regression test for...", "Bump version to...".
+autolabeler:
+  - label: "major"
+    title:
+      - "/^(breaking|major)[:\\s]/i"
+  - label: "fix"
+    title:
+      - "/^fix[:\\s]/i"
+  - label: "feature"
+    title:
+      - "/^(add|implement|create)[:\\s]/i"
+  - label: "chore"
+    title:
+      - "/^(bump|update|remove|polish|make|rename|refactor|clean\\s?up)[:\\s]/i"
+    files:
+      - ".github/**"
+      - "*.md"
+      - "docs/**"
+
+template: |
+  ## What's Changed
+
+  $CHANGES
