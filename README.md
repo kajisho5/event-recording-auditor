@@ -216,31 +216,30 @@ Actions versions and Python dependencies.
 
 ### Releasing a version
 
-The usual path: bump `version` in `pyproject.toml` in a PR (e.g.
-`"0.1.0-beta"` -> `"0.2.0"`) and merge it to `main`. Everything after that
-is automatic:
+Every push to `main` runs `.github/workflows/release.yml`, a single job
+that decides whether a release is due and, if so, does everything:
+resolves the version, updates `pyproject.toml`, writes a
+[`CHANGELOG.md`](CHANGELOG.md) entry, tags, creates the GitHub Release,
+and pushes the Docker image (and PyPI, if `PYPI_API_TOKEN` is configured).
+It is one job on purpose -- a tag/commit pushed by the workflow's own
+`GITHUB_TOKEN` does not trigger a *second* workflow's `push:` event
+(GitHub's anti-recursion protection), so a design split across two
+workflows can silently never complete its second half.
 
-1. `.github/workflows/tag-on-version-bump.yml` notices the version string
-   changed and pushes a `v<version>` tag.
-2. That tag push triggers `.github/workflows/release.yml`, which creates
-   the GitHub Release with auto-generated notes (from the commits/PRs
-   merged since the previous tag -- never hand-written) and prepends an
-   entry to [`CHANGELOG.md`](CHANGELOG.md). A tag with a hyphen (e.g.
-   `v0.1.0-beta`, semver's pre-release convention) is published as a
-   pre-release.
-3. The same tag push triggers `.github/workflows/docker.yml`, which
-   builds and pushes the image to
-   `ghcr.io/kajisho5/event-recording-auditor`, moving the `:latest` tag
-   only for non-pre-release versions.
+Two ways to trigger a release:
 
-To publish a version without going through a version-bump PR (e.g. to tag
-an existing commit), push the tag directly instead and steps 2-3 above
-still fire the same way:
-
-```bash
-git tag v0.1.0-beta
-git push origin v0.1.0-beta
-```
+- **Manual** (for a deliberate version, or to graduate out of beta): bump
+  `version` in `pyproject.toml` in a PR (e.g. `"0.1.1-beta"` ->
+  `"0.2.0"`) and merge it. The workflow releases exactly that version,
+  verbatim.
+- **Automatic** (the default when nobody bumps the version): the next
+  version is resolved from merged PRs' labels
+  ([`fix`/`feature`/`major`/`chore`](.github/release-drafter.yml), applied
+  automatically by [`.github/workflows/pr-autolabel.yml`](.github/workflows/pr-autolabel.yml)
+  from each PR's title) via [release-drafter](https://github.com/release-drafter/release-drafter)
+  in dry-run mode, then the same `-beta` (or other) suffix the previous
+  tag had is re-applied. No labels on any merged PR since the last tag ->
+  patch bump by default.
 
 ## Documentation
 

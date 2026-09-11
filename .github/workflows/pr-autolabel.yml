@@ -1,0 +1,43 @@
+name: pr-autolabel
+
+# Applies fix/feature/major/chore labels to PRs from their title and
+# changed files (see .github/release-drafter.yml, autolabeler). Runs on
+# pull_request_target (not pull_request) so it works on PRs from forks
+# too -- it never checks out or executes the PR's own code, only reads
+# trusted event metadata (title, base-repo config, changed files) and
+# writes labels via the API, so the elevated pull_request_target token
+# is never exposed to untrusted code.
+#
+# This is a prerequisite for .github/workflows/release.yml's automatic
+# version bumping: without labels on merged PRs, every release resolves
+# to a patch bump by default.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  autolabel:
+    runs-on: ubuntu-latest
+    steps:
+      # release-drafter's autolabeler adds labels via the API but does not
+      # create missing ones first -- that fails outright the first time a
+      # label named in .github/release-drafter.yml doesn't exist yet.
+      - name: Ensure the labels release-drafter.yml references exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create major --color b60205 --description "Breaking change" --force -R "${{ github.repository }}"
+          gh label create feature --color a2eeef --description "New functionality" --force -R "${{ github.repository }}"
+          gh label create fix --color d73a4a --description "Bug fix" --force -R "${{ github.repository }}"
+          gh label create chore --color cfd3d7 --description "Maintenance, docs, CI" --force -R "${{ github.repository }}"
+
+      - uses: release-drafter/release-drafter@v6
+        with:
+          disable-releaser: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
