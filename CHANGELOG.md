@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3-beta - 2026-09-11
+
+- Remove text-pattern autolabeler rule for the "major" label (#21) (dd84f5b)
+
+
 ## v0.1.2-beta - 2026-09-11
 
 - Fix release-drafter using nonexistent input names (#20) (339d0c4)
