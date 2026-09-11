@@ -14,6 +14,15 @@ name-template: "v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 version-template: "$MAJOR.$MINOR.$PATCH"
 
+# Every release this project has published so far is a "-beta" GitHub
+# pre-release. release-drafter's dry run otherwise only looks at
+# non-prerelease GitHub Releases to find "the previous release" to diff
+# against -- with none existing, it silently resolves nothing (confirmed
+# live: v0.1.1-beta -> a merge with a "fix"-labeled PR still produced an
+# empty resolved_version and .github/workflows/release.yml correctly
+# skipped, per its own logs, rather than releasing something wrong).
+include-pre-releases: true
+
 categories:
   - title: "Breaking changes"
     labels: ["major"]
