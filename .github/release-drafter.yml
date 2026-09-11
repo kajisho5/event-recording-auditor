@@ -1,7 +1,9 @@
 # Used two ways:
 #  1. .github/workflows/pr-autolabel.yml runs this config's `autolabeler`
-#     on every PR (opened/reopened/synchronize) to apply fix/feature/major/
-#     chore labels from the PR's title and changed files.
+#     on every PR (opened/reopened/synchronize) to apply fix/feature/chore
+#     labels from the PR's title and changed files. "major" is
+#     intentionally NOT autolabeled -- see the comment above the
+#     `autolabeler` section below for why.
 #  2. .github/workflows/release.yml runs release-drafter in dry-run mode
 #     (disable-releaser: true) to resolve the next version from those
 #     labels on PRs merged since the latest tag, via `version-resolver`
@@ -47,10 +49,20 @@ version-resolver:
 # Matched against this repo's actual PR title convention: plain imperative
 # sentences (no conventional-commit prefixes), e.g. "Fix workflow_dispatch
 # on release.yml...", "Add regression test for...", "Bump version to...".
+#
+# Deliberately no "major" rule here. A text-pattern autolabeler rule that
+# applies "major" from a PR's title/body (e.g. matching "breaking:" or a
+# "BREAKING CHANGE" mention anywhere in the description) auto-bumps the
+# next version to a new major release the moment that PR merges, with no
+# human decision in the loop -- a real incident in another repo
+# (color-grading-skill) had a bug-description paragraph that merely
+# mentioned the words "BREAKING CHANGE" get auto-labeled "major", which
+# would have shipped an unintended vX.0.0 had it merged at the wrong
+# moment. version-resolver.major above still maps the "major" label to a
+# major bump -- that's fine and intentional -- but the label itself must
+# only ever be applied by a human, deliberately, never by text-pattern
+# matching. Do not re-add a title/body-pattern rule for "major" here.
 autolabeler:
-  - label: "major"
-    title:
-      - "/^(breaking|major)[:\\s]/i"
   - label: "fix"
     title:
       - "/^fix[:\\s]/i"
