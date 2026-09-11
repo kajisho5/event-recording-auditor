@@ -64,15 +64,19 @@ jobs:
           echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
 
       # Only needed when nobody has manually bumped pyproject.toml yet.
-      # Dry run: disable-releaser skips creating/updating anything, this
-      # only resolves a version number from merged PRs' labels.
+      # `dry-run: true` is release-drafter's real input for "resolve a
+      # version, do not write anything" -- `disable-releaser` /
+      # `disable-autolabeler`, used here previously, are not real inputs
+      # of this action at all (confirmed against its actual action.yml);
+      # GitHub Actions silently ignores unrecognized `with:` keys rather
+      # than erroring, so that mistake never surfaced as a failure, just
+      # as resolved_version always coming back empty.
       - name: Resolve next version from merged PR labels (dry run)
         id: drafter
         if: steps.current.outputs.latest_tag != '' && steps.current.outputs.current == steps.current.outputs.latest_version
         uses: release-drafter/release-drafter@v6
         with:
-          disable-releaser: true
-          disable-autolabeler: true
+          dry-run: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
