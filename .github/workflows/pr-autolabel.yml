@@ -36,8 +36,13 @@ jobs:
           gh label create fix --color d73a4a --description "Bug fix" --force -R "${{ github.repository }}"
           gh label create chore --color cfd3d7 --description "Maintenance, docs, CI" --force -R "${{ github.repository }}"
 
+      # `disable-releaser` is not a real input of this action (see
+      # release.yml's comment on the same mistake) -- autolabeling on a
+      # pull_request_target event is this action's normal behavior
+      # regardless, but `dry-run: true` is added as a defensive no-op
+      # against it ever also trying to draft/update a release here.
       - uses: release-drafter/release-drafter@v6
         with:
-          disable-releaser: true
+          dry-run: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
