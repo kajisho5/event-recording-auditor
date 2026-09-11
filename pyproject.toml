@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "event-recording-auditor"
-version = "0.1.1-beta"
+version = "0.1.2-beta"
 description = "Evidence-first, deterministic anomaly detection for recorded event footage."
 readme = "README.md"
 requires-python = ">=3.10"

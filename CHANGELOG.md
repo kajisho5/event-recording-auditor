@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.2-beta - 2026-09-11
+
+- Fix release-drafter using nonexistent input names (#20) (339d0c4)
+- Fix release-drafter resolving nothing against prerelease-only history (#19) (732dbd4)
+- Fix release.yml failing to parse on its first real run (#18) (8c10b5e)
+- Consolidate release automation into a single push-to-main workflow (#17) (0b0c437)
+- Add CodeQL scanning, PR template, and SECURITY.md (#16) (a6d4178)
+
+
 ## v0.1.1-beta - 2026-09-10
 
 ## What's Changed
